@@ -1,0 +1,241 @@
+INPUT
+  title = "I don't know what's wrong with me"
+  body  = "Been struggling for months..."
+  Batch size B = 20
+
+─────────────────────────────────────────────────────────────────
+LAYER 0 — TOKENIZER
+  title tokens:  [101, 1045, 2123, ...] length ≤ 64
+  body tokens:   head_256 + tail_128    length ≤ 320
+  Ghép:   [CLS] + title + [SEP] + body + [SEP]
+  shape:  (B, 384)    dtype: int64
+  segment:(B, 384)    0=title portion, 1=body portion
+
+─────────────────────────────────────────────────────────────────
+LAYER 1 — EMBEDDINGS
+  Token Emb:    (B, 384) → (B, 384, 512)
+  Pos Enc:      (1, 384, 512) broadcast → cộng vào
+  Segment Emb:  (B, 384) → (B, 384, 512)
+  Sum:          (B, 384, 512)
+  LayerNorm:    (B, 384, 512)
+  Dropout:      (B, 384, 512)
+  OUTPUT:       (B, 384, 512)
+
+─────────────────────────────────────────────────────────────────
+LAYER 2–7 — TRANSFORMER BLOCK × 6 (mỗi block giống nhau)
+
+  [Pre-LN 1]
+  x_norm = LayerNorm(x)           (B, 384, 512)
+
+  [Multi-Head Self-Attention]
+  Q = Linear(x_norm)              (B, 384, 512)
+  K = Linear(x_norm)              (B, 384, 512)
+  V = Linear(x_norm)              (B, 384, 512)
+
+  Reshape Q,K,V:                  (B, 8, 384, 64)   ← 8 heads, head_dim=64
+
+  scores = Q @ Kᵀ / √64          (B, 8, 384, 384)
+  rel_bias = Embedding(dist)      (B, 8, 384, 384)  ← relative position
+  scores = scores + rel_bias      (B, 8, 384, 384)
+  scores = masked_fill(pad=0, -inf)
+  attn_w = Softmax(scores)        (B, 8, 384, 384)
+  attn_w = Dropout(attn_w)
+  attn_out = attn_w @ V           (B, 8, 384, 64)
+  attn_out = reshape              (B, 384, 512)
+  attn_out = Linear(attn_out)     (B, 384, 512)     ← output projection
+  x = x + attn_out               (B, 384, 512)      ← residual
+
+  [Pre-LN 2]
+  x_norm = LayerNorm(x)           (B, 384, 512)
+
+  [GatedFFN — SwiGLU]
+  gate  = SiLU(Linear(x_norm))   (B, 384, 2048)
+  value = Linear(x_norm)         (B, 384, 2048)
+  gated = gate ⊙ value           (B, 384, 2048)
+  ffn_out = Linear(gated)        (B, 384, 512)
+  ffn_out = Dropout(ffn_out)
+  x = x + ffn_out                (B, 384, 512)      ← residual
+
+  OUTPUT mỗi block:               (B, 384, 512)
+
+─────────────────────────────────────────────────────────────────
+LAYER 8 — ENCODER FINAL LAYERNORM
+  x = LayerNorm(x)                (B, 384, 512)
+
+─────────────────────────────────────────────────────────────────
+LAYER 9 — SPLIT BY SEGMENT
+  cls_vec      = x[:, 0, :]       (B, 512)           ← token [CLS]
+  title_hidden = x[:, seg==0, :]  (B, ≤64, 512)
+  body_hidden  = x[:, seg==1, :]  (B, ≤320, 512)
+
+─────────────────────────────────────────────────────────────────
+LAYER 10 — DUAL POOLING
+
+  TITLE POOL:
+  query = cls_vec.unsqueeze(1)    (B, 1, 512)
+  K = Linear(title_hidden)        (B, ≤64, 512)
+  V = Linear(title_hidden)        (B, ≤64, 512)
+  scores = query @ Kᵀ / √512     (B, 1, ≤64)
+  attn = Softmax(scores)          (B, 1, ≤64)
+  title_vec = attn @ V            (B, 1, 512)
+  title_vec = squeeze             (B, 512)
+  title_vec = LayerNorm(title_vec)(B, 512)
+
+  BODY POOL:
+  query = cls_vec.unsqueeze(1)    (B, 1, 512)
+  K = Linear(body_hidden)         (B, ≤320, 512)
+  V = Linear(body_hidden)         (B, ≤320, 512)
+  scores = query @ Kᵀ / √512     (B, 1, ≤320)
+  attn = Softmax(scores)          (B, 1, ≤320)
+  body_vec = attn @ V             (B, 1, 512)
+  body_vec = squeeze              (B, 512)
+  body_vec = LayerNorm(body_vec)  (B, 512)
+
+─────────────────────────────────────────────────────────────────
+LAYER 11 — LEARNED GATE
+  combined = cat([title_vec,
+                  body_vec])      (B, 1024)
+  gate = Sigmoid(Linear(1024→1)) (B, 1)              ← scalar per post
+  fused = gate * title_vec
+        + (1-gate) * body_vec    (B, 512)
+
+─────────────────────────────────────────────────────────────────
+LAYER 12 — CLASSIFIER HEAD
+  x = Linear(fused, 512→256)     (B, 256)
+  x = GELU(x)                    (B, 256)
+  x = Dropout(x, p=0.1)          (B, 256)
+  x = Linear(x, 256→1)          (B, 1)
+  p = Sigmoid(x)                 (B, 1)
+
+─────────────────────────────────────────────────────────────────
+OUTPUT
+  p.squeeze()                     (B,)
+  values ∈ [0.0, 1.0]
+  threshold 0.5 → 0=neutral, 1=depression
+
+
+
+  
+Hyperparameters
+vocab_size  = 32,000     (BPE, train từ đầu)
+max_seq_len = 512
+d_model     = 512
+n_heads     = 8          (head_dim = 64)
+n_layers    = 6
+d_ff        = 2,048      (GatedFFN SwiGLU)
+dropout     = 0.1
+params      ≈ 38M
+VRAM        ≈ 4.8–5.2GB  (fp16, batch=20, gradient checkpointing)
+
+Loss        : Focal BCE  α=0.75  γ=2  + Label Smoothing ε=0.05
+Optimizer   : AdamW  lr=3e-5  warmup=5%  cosine decay
+Batch       : 20  ×  grad_accum 6  →  effective = 120
+
+Sequence Layout
+Tổng 512 tokens:
+  [CLS]  :   1   position 0
+  title  :  32   positions 1–32      (word budget ~24, cover P95)
+  [SEP]  :   1   position 33
+  body   : 477   positions 34–510    (head 318w + tail 159w)
+  [SEP]  :   1   position 511
+
+segment_ids : 0 = title portion  |  1 = body portion
+attn_mask   : 1 = real token     |  0 = padding
+length_feat : body_word_count_gốc / P99  ∈ [0.0, 1.0]  (tính sẵn trong CSV)
+
+Pipeline chi tiết
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+INPUT
+  title : string
+  body  : string  (đã head+tail truncate trong dataset_final.csv)
+  length_feat : float  (đã tính sẵn trong dataset_final.csv)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LAYER 1 — DepressionEmbeddings
+  input_ids   (B, 512)
+  segment_ids (B, 512)
+        │
+  Token Embedding     32000 × 512   lookup
+  Sinusoidal PosEnc   512 × 512     không học, cố định
+  Segment Embedding   3 × 512       học được
+        │
+  x = TokenEmb + PosEnc + SegEmb
+  x = LayerNorm(x) → Dropout(x)
+        │
+  OUTPUT: (B, 512, 512)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LAYERS 2–7 — TransformerEncoderBlock × 6
+  (mỗi block giống nhau, gradient checkpointing = recompute per block)
+
+  ┌─ Pre-LayerNorm ─────────────────────────────────────┐
+  │  x_norm = LayerNorm(x)                              │
+  │                                                     │
+  │  Multi-Head Self-Attention (8 heads, head_dim=64)   │
+  │    QKV = Linear(x_norm, 512→1536)                   │
+  │    Q,K,V reshape → (B, 8, 512, 64)                  │
+  │    scores = Q @ K^T / √64                           │
+  │           + RelPosBias(|i-j|, capped 127)           │
+  │    scores = masked_fill(pad, -inf)                  │
+  │    attn   = Softmax(scores) → Dropout               │
+  │    out    = attn @ V                                │
+  │    out    = reshape → Linear(512→512)               │
+  │  x = x + out                          (residual)    │
+  └─────────────────────────────────────────────────────┘
+  ┌─ Pre-LayerNorm ─────────────────────────────────────┐
+  │  x_norm = LayerNorm(x)                              │
+  │                                                     │
+  │  GatedFFN — SwiGLU                                  │
+  │    gate  = SiLU(Linear(x_norm, 512→2048))           │
+  │    value =      Linear(x_norm, 512→2048)            │
+  │    gated = gate ⊙ value                            │
+  │    out   = Linear(gated, 2048→512) → Dropout        │
+  │  x = x + out                          (residual)    │
+  └─────────────────────────────────────────────────────┘
+  OUTPUT mỗi block: (B, 512, 512)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LAYER 8 — Final LayerNorm
+  x = LayerNorm(x)
+  OUTPUT: (B, 512, 512)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LAYER 9 — Split by Segment
+  cls_vec      = x[:, 0, :]              (B, 512)
+  title_hidden = x[:, seg==0, :]         (B, ≤32, 512)
+  body_hidden  = x[:, seg==1, :]         (B, ≤479, 512)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LAYER 10 — DualPooling  (CLS làm Query)
+
+  TITLE POOL:
+    Q = Linear_Q(cls_vec)          (B, 1, 512)
+    K = Linear_K(title_hidden)     (B, ≤32, 512)
+    V = Linear_V(title_hidden)     (B, ≤32, 512)
+    scores  = Q @ K^T / √512       (B, 1, ≤32)
+    scores  = masked_fill(pad, -inf)
+    attn    = Softmax(scores)       (B, 1, ≤32)
+    pooled  = attn @ V → squeeze    (B, 512)
+    title_vec = LayerNorm(pooled)   (B, 512)
+
+  BODY POOL:  (giống title pool, K/V riêng biệt)
+    Q = Linear_Q(cls_vec)          (B, 1, 512)   ← cùng Q projection
+    K = Linear_K(body_hidden)      (B, ≤479, 512)
+    V = Linear_V(body_hidden)      (B, ≤479, 512)
+    scores  = Q @ K^T / √512       (B, 1, ≤479)
+    scores  = masked_fill(pad, -inf)
+    attn    = Softmax(scores)       (B, 1, ≤479)
+    pooled  = attn @ V → squeeze    (B, 512)
+    body_vec = LayerNorm(pooled)    (B, 512)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LAYER 11 — LearnedGate
+  combined = concat(title_vec, body_vec)   (B, 1024)
+  gate     = Sigmoid(Linear(1024→1))       (B, 1)
+             init bias = -1.0  →  gate ≈ 0.27 lúc đầu
+  fused    = gate × title_vec
+           + (1−gate) × body_vec           (B, 512)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LAYER 12 — Length Feature Injection        ← từ dataset_final.csv
+  length_feat = scalar ∈ [0.0, 1.0]        (B, 1)
+  x = concat(fused, length_feat)           (B, 513)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LAYER 13 — ClassifierHead
+  x = Linear(513→256) → GELU → Dropout(0.1)
+  x = Linear(256→1)   → Sigmoid
+  OUTPUT: P(depression) ∈ [0.0, 1.0]   shape (B,)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

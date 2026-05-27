@@ -1,0 +1,122 @@
+{
+  "cleaning": {
+    "n_input": 2470778,
+    "drops": {
+      "null_label_or_id": 106,
+      "duplicate_id": 0,
+      "invalid_created_utc": 0,
+      "title_and_body_both_empty": 49,
+      "body_duplicate_rows": 606
+    },
+    "modifications": {
+      "body_marked_removed": 462102,
+      "title_marked_empty": 9,
+      "upvotes_null_filled": 0,
+      "upvotes_neg_clipped_to_zero": 0,
+      "upvotes_top_clipped_at_p995": {
+        "upper": 1616.0,
+        "n_clipped": 12350
+      },
+      "num_comments_null_filled": 113870,
+      "num_comments_neg_clipped_to_zero": 3,
+      "num_comments_top_clipped_at_p995": {
+        "upper": 188.0,
+        "n_clipped": 12295
+      },
+      "dedup_min_body_len": 40
+    },
+    "n_output": 2470017,
+    "overall_pct_dropped": 0.0308,
+    "label_distribution_post_clean": {
+      "0": 1989761,
+      "1": 480256
+    },
+    "subreddit_count_post_clean": 5
+  },
+  "splitting": {
+    "n_input": 2470017,
+    "time_split": {
+      "boundaries": {
+        "train_max_year": 2020,
+        "val_year": 2021,
+        "test_year": 2022
+      },
+      "counts": {
+        "train": 1815216,
+        "val": 442119,
+        "test": 212682
+      },
+      "label_rate_per_split": {
+        "train": 0.198125,
+        "val": 0.14765,
+        "test": 0.260187
+      }
+    },
+    "random_split": {
+      "ratios": {
+        "val_pct": 0.1,
+        "test_pct": 0.1
+      },
+      "counts": {
+        "train": 1976013,
+        "val": 247002,
+        "test": 247002
+      },
+      "label_rate_per_split": {
+        "train": 0.194434,
+        "val": 0.194436,
+        "test": 0.194432
+      }
+    },
+    "kfold": {
+      "n_folds": 3,
+      "seed": 2024,
+      "rows_per_fold": {
+        "0": 605072,
+        "1": 605072,
+        "2": 605072
+      },
+      "label_rate_per_fold": {
+        "0": 0.198125,
+        "1": 0.198125,
+        "2": 0.198125
+      }
+    }
+  },
+  "features": {
+    "n_rows": 2470017,
+    "n_features_excluding_id_label": 26,
+    "columns": [
+      "id",
+      "title_len_chars",
+      "body_len_chars",
+      "body_to_title_ratio",
+      "body_length_bucket",
+      "upvotes_log",
+      "num_comments_log",
+      "comments_per_upvote",
+      "upvotes_pct_in_subreddit",
+      "has_title",
+      "has_body",
+      "num_exclamations",
+      "num_questions",
+      "num_caps_words",
+      "num_ellipsis",
+      "num_first_person",
+      "num_negative_words",
+      "num_words",
+      "has_mh_keyword",
+      "hour_sin",
+      "hour_cos",
+      "dow_sin",
+      "dow_cos",
+      "is_weekend",
+      "is_night_us_eastern",
+      "year",
+      "subreddit",
+      "label"
+    ],
+    "has_mh_keyword_pct": 32.4539,
+    "has_body_pct": 81.2532
+  }
+}
