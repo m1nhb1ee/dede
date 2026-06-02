@@ -109,6 +109,13 @@ os.environ["STAGE1_PROFILE"]       = "kaggle"
 os.environ["STAGE1_POSTS_CLEAN"]   = f"{PREP_DATA_DIR}/posts_clean.parquet"
 os.environ["STAGE1_SPLITS"]        = f"{PREP_DATA_DIR}/splits.parquet"
 os.environ["STAGE1_OUT_DIR"]       = "/kaggle/working/stage1/outputs"
+# Reduce CUDA memory fragmentation (fix OOM when switching train/eval)
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+# Disable HuggingFace progress bars (avoid 197-line spam when loading weights)
+os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"  # silence weights-loading bars (197 lines)
+os.environ["TRANSFORMERS_VERBOSITY"] = "error"    # silence transformers info logs
+os.environ["DATASETS_VERBOSITY"]     = "error"    # silence datasets logs
+os.environ["TQDM_DISABLE"]           = "1"        # silence ALL tqdm bars (subprocess can't render \r)
 
 # Verify
 for k in ("STAGE1_PROFILE", "STAGE1_POSTS_CLEAN", "STAGE1_SPLITS", "STAGE1_OUT_DIR"):
@@ -168,7 +175,7 @@ print(f"Seq length p50/p95/p99 on first 1000: {np.percentile(lens, [50,95,99]).a
 
 
 # ═════════════════════════════════════════════════════════════════════════
-# CELL 5 -- Train ONE fold (~3-4 hours on 2x T4)
+# CELL 5 -- Train ONE fold (~3-4 hours on 2x T4) -- SUBPROCESS for isolation
 # ═════════════════════════════════════════════════════════════════════════
 """
 import subprocess, time
@@ -189,7 +196,8 @@ print(f"=== Training {label} ===")
 print("CMD:", " ".join(cmd))
 t0 = time.perf_counter()
 
-# Stream stdout in real-time so we can watch progress in the notebook
+# Stream stdout in real-time so we can watch progress in the notebook.
+# tqdm disabled in train.py (subprocess capture can't render \r in-place).
 proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                         text=True, bufsize=1)
 for line in proc.stdout:

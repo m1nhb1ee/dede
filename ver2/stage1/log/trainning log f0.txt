@@ -1,0 +1,558 @@
+=== Training fold 0 ===
+CMD: python train.py --mode fold --fold 0 --model_dir /kaggle/input/models/nguyenlehung/model/tensorflow2/default/1/mental-roberta-base --undersample_neg 0.5
+
+========================================================================
+Stage 1 training | mode=fold  fold=0  profile=kaggle  n_gpus=2
+========================================================================
+[tokenizer] loaded: /kaggle/input/models/nguyenlehung/model/tensorflow2/default/1/mental-roberta-base
+[backbone] loaded: /kaggle/input/models/nguyenlehung/model/tensorflow2/default/1/mental-roberta-base  hidden=768
+  -> Loading cached tokenized dataset: /kaggle/working/stage1/outputs/token_cache/_kaggle_input_models_nguyenlehung_model_tensorflow2_default_1_mental-roberta-base_ml512
+  -> Split sizes: train=1,210,144  val=605,072  test=212,682
+  -> Undersampled neg to 50%: kept 239,760 pos + 485,192 neg = 724,952 total
+  -> Eval subset (stratified, for early stop): 60,000 rows (pos_rate=0.198)
+  -> Quick subset (stratified, for [QUICK] log): 5,000 rows (pos_rate=0.198) -- disjoint from eval subset
+  -> Full val (605,072) reserved for final OOF predict
+  -> pos_weight = 2.0237
+trainable params: 589,824 || all params: 125,235,456 || trainable%: 0.4710
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+  [QUICK]   step=100  loss=0.5478  f1_macro=0.8138  f1_pos=0.6904  recall_pos=0.5873  recall_macro=0.7795
+  [METRICS] step=100  epoch=0.0088  grad_norm=5.3520  learning_rate=0.0001  loss=0.9503
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.9503', 'grad_norm': '5.352', 'learning_rate': '7.279e-05', 'epoch': '0.008828'}
+  [QUICK]   step=200  loss=0.3580  f1_macro=0.9024  f1_pos=0.8459  recall_pos=0.8971  recall_macro=0.9208
+  [METRICS] step=200  epoch=0.0177  grad_norm=1.8189  learning_rate=0.0001  loss=0.4795
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.4795', 'grad_norm': '1.819', 'learning_rate': '0.0001463', 'epoch': '0.01766'}
+  [QUICK]   step=300  loss=0.3500  f1_macro=0.9087  f1_pos=0.8558  recall_pos=0.9072  recall_macro=0.9273
+  [METRICS] step=300  epoch=0.0265  grad_norm=1.4093  learning_rate=0.0002  loss=0.3748
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3748', 'grad_norm': '1.409', 'learning_rate': '0.0002199', 'epoch': '0.02648'}
+  [QUICK]   step=400  loss=0.4549  f1_macro=0.8311  f1_pos=0.7489  recall_pos=0.9707  recall_macro=0.9085
+  [METRICS] step=400  epoch=0.0353  grad_norm=3.0341  learning_rate=0.0003  loss=0.3766
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3766', 'grad_norm': '3.034', 'learning_rate': '0.0002934', 'epoch': '0.03531'}
+  [QUICK]   step=500  loss=0.3850  f1_macro=0.8719  f1_pos=0.8047  recall_pos=0.9647  recall_macro=0.9288
+  [METRICS] step=500  epoch=0.0441  grad_norm=2.9168  learning_rate=0.0004  loss=0.3627
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3627', 'grad_norm': '2.917', 'learning_rate': '0.0003669', 'epoch': '0.04414'}
+  [QUICK]   step=600  loss=0.4293  f1_macro=0.8485  f1_pos=0.7720  recall_pos=0.9637  recall_macro=0.9160
+  [METRICS] step=600  epoch=0.0530  grad_norm=1.3012  learning_rate=0.0004  loss=0.3708
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3708', 'grad_norm': '1.301', 'learning_rate': '0.0004404', 'epoch': '0.05297'}
+  [QUICK]   step=700  loss=0.3457  f1_macro=0.9134  f1_pos=0.8624  recall_pos=0.8951  recall_macro=0.9252
+  [METRICS] step=700  epoch=0.0618  grad_norm=2.7335  learning_rate=0.0005  loss=0.3624
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3624', 'grad_norm': '2.734', 'learning_rate': '0.0004991', 'epoch': '0.0618'}
+  [QUICK]   step=800  loss=0.3347  f1_macro=0.9203  f1_pos=0.8726  recall_pos=0.8809  recall_macro=0.9234
+  [METRICS] step=800  epoch=0.0706  grad_norm=2.0848  learning_rate=0.0005  loss=0.3734
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3734', 'grad_norm': '2.085', 'learning_rate': '0.0004944', 'epoch': '0.07062'}
+  [QUICK]   step=900  loss=0.3347  f1_macro=0.9180  f1_pos=0.8701  recall_pos=0.9122  recall_macro=0.9333
+  [METRICS] step=900  epoch=0.0795  grad_norm=2.1332  learning_rate=0.0005  loss=0.3641
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3641', 'grad_norm': '2.133', 'learning_rate': '0.0004897', 'epoch': '0.07945'}
+  [QUICK]   step=1000  loss=0.3405  f1_macro=0.9045  f1_pos=0.8506  recall_pos=0.9334  recall_macro=0.9344
+  [METRICS] step=1000  epoch=0.0883  grad_norm=1.5153  learning_rate=0.0005  loss=0.3522
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3522', 'grad_norm': '1.515', 'learning_rate': '0.000485', 'epoch': '0.08828'}
+  [QUICK]   step=1100  loss=0.3376  f1_macro=0.9062  f1_pos=0.8531  recall_pos=0.9344  recall_macro=0.9355
+  [METRICS] step=1100  epoch=0.0971  grad_norm=1.1531  learning_rate=0.0005  loss=0.3507
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3507', 'grad_norm': '1.153', 'learning_rate': '0.0004803', 'epoch': '0.09711'}
+  [QUICK]   step=1200  loss=0.3768  f1_macro=0.8794  f1_pos=0.8152  recall_pos=0.9617  recall_macro=0.9317
+  [METRICS] step=1200  epoch=0.1059  grad_norm=1.6578  learning_rate=0.0005  loss=0.3552
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3552', 'grad_norm': '1.658', 'learning_rate': '0.0004756', 'epoch': '0.1059'}
+  [QUICK]   step=1300  loss=0.3432  f1_macro=0.8993  f1_pos=0.8434  recall_pos=0.9455  recall_macro=0.9361
+  [METRICS] step=1300  epoch=0.1148  grad_norm=2.8574  learning_rate=0.0005  loss=0.3569
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3569', 'grad_norm': '2.857', 'learning_rate': '0.0004709', 'epoch': '0.1148'}
+  [QUICK]   step=1400  loss=0.3773  f1_macro=0.8871  f1_pos=0.8262  recall_pos=0.9596  recall_macro=0.9349
+  [METRICS] step=1400  epoch=0.1236  grad_norm=3.0402  learning_rate=0.0005  loss=0.3389
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3389', 'grad_norm': '3.04', 'learning_rate': '0.0004662', 'epoch': '0.1236'}
+  [METRICS] step=1500  epoch=0.1324  grad_norm=2.7160  learning_rate=0.0005  loss=0.3503
+{'loss': '0.3503', 'grad_norm': '2.716', 'learning_rate': '0.0004615', 'epoch': '0.1324'}
+  [METRICS] step=1500  epoch=0.1324  eval_accuracy=0.9015  eval_f1_macro=0.8662  eval_f1_pos=0.7974  eval_loss=0.3984  eval_pr_auc=0.9512  eval_recall_macro=0.9302  eval_recall_pos=0.9775  eval_roc_auc=0.9858  eval_runtime=426.0133  eval_samples_per_second=140.8410  eval_steps_per_second=8.8030
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'eval_loss': '0.3984', 'eval_accuracy': '0.9015', 'eval_f1_macro': '0.8662', 'eval_f1_pos': '0.7974', 'eval_recall_pos': '0.9775', 'eval_recall_macro': '0.9302', 'eval_roc_auc': '0.9858', 'eval_pr_auc': '0.9512', 'eval_runtime': '426', 'eval_samples_per_second': '140.8', 'eval_steps_per_second': '8.803', 'epoch': '0.1324'}
+  [QUICK]   step=1600  loss=0.3294  f1_macro=0.9138  f1_pos=0.8634  recall_pos=0.9021  recall_macro=0.9279
+  [METRICS] step=1600  epoch=0.1412  grad_norm=1.8884  learning_rate=0.0005  loss=0.3342
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3342', 'grad_norm': '1.888', 'learning_rate': '0.0004568', 'epoch': '0.1412'}
+  [QUICK]   step=1700  loss=0.3193  f1_macro=0.9244  f1_pos=0.8801  recall_pos=0.9183  recall_macro=0.9383
+  [METRICS] step=1700  epoch=0.1501  grad_norm=1.4965  learning_rate=0.0005  loss=0.3350
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.335', 'grad_norm': '1.497', 'learning_rate': '0.0004522', 'epoch': '0.1501'}
+  [QUICK]   step=1800  loss=0.3263  f1_macro=0.9121  f1_pos=0.8625  recall_pos=0.9495  recall_macro=0.9436
+  [METRICS] step=1800  epoch=0.1589  grad_norm=1.8492  learning_rate=0.0004  loss=0.3278
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3278', 'grad_norm': '1.849', 'learning_rate': '0.0004475', 'epoch': '0.1589'}
+  [QUICK]   step=1900  loss=0.3503  f1_macro=0.8910  f1_pos=0.8320  recall_pos=0.9617  recall_macro=0.9375
+  [METRICS] step=1900  epoch=0.1677  grad_norm=2.9993  learning_rate=0.0004  loss=0.3432
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3432', 'grad_norm': '2.999', 'learning_rate': '0.0004428', 'epoch': '0.1677'}
+  [QUICK]   step=2000  loss=0.3243  f1_macro=0.9154  f1_pos=0.8673  recall_pos=0.9435  recall_macro=0.9431
+  [METRICS] step=2000  epoch=0.1766  grad_norm=1.5265  learning_rate=0.0004  loss=0.3251
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3251', 'grad_norm': '1.526', 'learning_rate': '0.0004381', 'epoch': '0.1766'}
+  [QUICK]   step=2100  loss=0.3252  f1_macro=0.9144  f1_pos=0.8657  recall_pos=0.9435  recall_macro=0.9426
+  [METRICS] step=2100  epoch=0.1854  grad_norm=2.4111  learning_rate=0.0004  loss=0.3371
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3371', 'grad_norm': '2.411', 'learning_rate': '0.0004334', 'epoch': '0.1854'}
+  [QUICK]   step=2200  loss=0.3366  f1_macro=0.9069  f1_pos=0.8549  recall_pos=0.9546  recall_macro=0.9429
+  [METRICS] step=2200  epoch=0.1942  grad_norm=1.5225  learning_rate=0.0004  loss=0.3252
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3252', 'grad_norm': '1.522', 'learning_rate': '0.0004287', 'epoch': '0.1942'}
+  [QUICK]   step=2300  loss=0.3183  f1_macro=0.9181  f1_pos=0.8716  recall_pos=0.9485  recall_macro=0.9461
+  [METRICS] step=2300  epoch=0.2030  grad_norm=1.0109  learning_rate=0.0004  loss=0.3427
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3427', 'grad_norm': '1.011', 'learning_rate': '0.000424', 'epoch': '0.203'}
+  [QUICK]   step=2400  loss=0.3165  f1_macro=0.9216  f1_pos=0.8762  recall_pos=0.9324  recall_macro=0.9420
+  [METRICS] step=2400  epoch=0.2119  grad_norm=0.6251  learning_rate=0.0004  loss=0.3291
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3291', 'grad_norm': '0.6251', 'learning_rate': '0.0004193', 'epoch': '0.2119'}
+  [QUICK]   step=2500  loss=0.3370  f1_macro=0.9067  f1_pos=0.8548  recall_pos=0.9566  recall_macro=0.9435
+  [METRICS] step=2500  epoch=0.2207  grad_norm=3.1367  learning_rate=0.0004  loss=0.3377
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3377', 'grad_norm': '3.137', 'learning_rate': '0.0004146', 'epoch': '0.2207'}
+  [QUICK]   step=2600  loss=0.3584  f1_macro=0.8967  f1_pos=0.8405  recall_pos=0.9677  recall_macro=0.9424
+  [METRICS] step=2600  epoch=0.2295  grad_norm=1.8279  learning_rate=0.0004  loss=0.3186
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3186', 'grad_norm': '1.828', 'learning_rate': '0.0004099', 'epoch': '0.2295'}
+  [QUICK]   step=2700  loss=0.3534  f1_macro=0.8909  f1_pos=0.8322  recall_pos=0.9707  recall_macro=0.9406
+  [METRICS] step=2700  epoch=0.2384  grad_norm=1.5029  learning_rate=0.0004  loss=0.3269
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3269', 'grad_norm': '1.503', 'learning_rate': '0.0004052', 'epoch': '0.2384'}
+  [QUICK]   step=2800  loss=0.3207  f1_macro=0.9265  f1_pos=0.8823  recall_pos=0.8850  recall_macro=0.9275
+  [METRICS] step=2800  epoch=0.2472  grad_norm=0.9369  learning_rate=0.0004  loss=0.3287
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3287', 'grad_norm': '0.9369', 'learning_rate': '0.0004005', 'epoch': '0.2472'}
+  [QUICK]   step=2900  loss=0.3480  f1_macro=0.8975  f1_pos=0.8417  recall_pos=0.9657  recall_macro=0.9422
+  [METRICS] step=2900  epoch=0.2560  grad_norm=2.0047  learning_rate=0.0004  loss=0.3296
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3296', 'grad_norm': '2.005', 'learning_rate': '0.0003958', 'epoch': '0.256'}
+  [METRICS] step=3000  epoch=0.2648  grad_norm=1.3305  learning_rate=0.0004  loss=0.3260
+{'loss': '0.326', 'grad_norm': '1.33', 'learning_rate': '0.0003911', 'epoch': '0.2648'}
+  [METRICS] step=3000  epoch=0.2648  eval_accuracy=0.9466  eval_f1_macro=0.9211  eval_f1_pos=0.8763  eval_loss=0.3120  eval_pr_auc=0.9598  eval_recall_macro=0.9498  eval_recall_pos=0.9551  eval_roc_auc=0.9885  eval_runtime=426.0304  eval_samples_per_second=140.8350  eval_steps_per_second=8.8020
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'eval_loss': '0.312', 'eval_accuracy': '0.9466', 'eval_f1_macro': '0.9211', 'eval_f1_pos': '0.8763', 'eval_recall_pos': '0.9551', 'eval_recall_macro': '0.9498', 'eval_roc_auc': '0.9885', 'eval_pr_auc': '0.9598', 'eval_runtime': '426', 'eval_samples_per_second': '140.8', 'eval_steps_per_second': '8.802', 'epoch': '0.2648'}
+  [QUICK]   step=3100  loss=0.3181  f1_macro=0.9196  f1_pos=0.8737  recall_pos=0.9455  recall_macro=0.9457
+  [METRICS] step=3100  epoch=0.2737  grad_norm=1.0141  learning_rate=0.0004  loss=0.3225
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3225', 'grad_norm': '1.014', 'learning_rate': '0.0003864', 'epoch': '0.2737'}
+  [QUICK]   step=3200  loss=0.3064  f1_macro=0.9278  f1_pos=0.8859  recall_pos=0.9405  recall_macro=0.9477
+  [METRICS] step=3200  epoch=0.2825  grad_norm=2.4615  learning_rate=0.0004  loss=0.3189
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3189', 'grad_norm': '2.461', 'learning_rate': '0.0003817', 'epoch': '0.2825'}
+  [QUICK]   step=3300  loss=0.3316  f1_macro=0.9065  f1_pos=0.8548  recall_pos=0.9657  recall_macro=0.9466
+  [METRICS] step=3300  epoch=0.2913  grad_norm=1.6980  learning_rate=0.0004  loss=0.3278
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3278', 'grad_norm': '1.698', 'learning_rate': '0.000377', 'epoch': '0.2913'}
+  [QUICK]   step=3400  loss=0.3188  f1_macro=0.9167  f1_pos=0.8699  recall_pos=0.9617  recall_macro=0.9500
+  [METRICS] step=3400  epoch=0.3002  grad_norm=1.0314  learning_rate=0.0004  loss=0.3130
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.313', 'grad_norm': '1.031', 'learning_rate': '0.0003723', 'epoch': '0.3002'}
+  [QUICK]   step=3500  loss=0.3129  f1_macro=0.9228  f1_pos=0.8779  recall_pos=0.9253  recall_macro=0.9401
+  [METRICS] step=3500  epoch=0.3090  grad_norm=0.7760  learning_rate=0.0004  loss=0.3192
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3192', 'grad_norm': '0.776', 'learning_rate': '0.0003676', 'epoch': '0.309'}
+  [QUICK]   step=3600  loss=0.3088  f1_macro=0.9251  f1_pos=0.8821  recall_pos=0.9475  recall_macro=0.9489
+  [METRICS] step=3600  epoch=0.3178  grad_norm=1.7984  learning_rate=0.0004  loss=0.3438
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3438', 'grad_norm': '1.798', 'learning_rate': '0.0003629', 'epoch': '0.3178'}
+  [QUICK]   step=3700  loss=0.3054  f1_macro=0.9281  f1_pos=0.8868  recall_pos=0.9526  recall_macro=0.9521
+  [METRICS] step=3700  epoch=0.3266  grad_norm=0.8718  learning_rate=0.0004  loss=0.3277
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3277', 'grad_norm': '0.8718', 'learning_rate': '0.0003582', 'epoch': '0.3266'}
+  [QUICK]   step=3800  loss=0.3131  f1_macro=0.9244  f1_pos=0.8808  recall_pos=0.9435  recall_macro=0.9472
+  [METRICS] step=3800  epoch=0.3355  grad_norm=2.5271  learning_rate=0.0004  loss=0.3192
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3192', 'grad_norm': '2.527', 'learning_rate': '0.0003535', 'epoch': '0.3355'}
+  [QUICK]   step=3900  loss=0.3545  f1_macro=0.8915  f1_pos=0.8333  recall_pos=0.9738  recall_macro=0.9420
+  [METRICS] step=3900  epoch=0.3443  grad_norm=1.0900  learning_rate=0.0003  loss=0.3247
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3247', 'grad_norm': '1.09', 'learning_rate': '0.0003488', 'epoch': '0.3443'}
+  [QUICK]   step=4000  loss=0.3263  f1_macro=0.9144  f1_pos=0.8664  recall_pos=0.9586  recall_macro=0.9479
+  [METRICS] step=4000  epoch=0.3531  grad_norm=1.0663  learning_rate=0.0003  loss=0.3249
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3249', 'grad_norm': '1.066', 'learning_rate': '0.0003441', 'epoch': '0.3531'}
+  [QUICK]   step=4100  loss=0.3251  f1_macro=0.9089  f1_pos=0.8580  recall_pos=0.9576  recall_macro=0.9449
+  [METRICS] step=4100  epoch=0.3620  grad_norm=1.2250  learning_rate=0.0003  loss=0.3218
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3218', 'grad_norm': '1.225', 'learning_rate': '0.0003395', 'epoch': '0.362'}
+  [QUICK]   step=4200  loss=0.3207  f1_macro=0.9102  f1_pos=0.8601  recall_pos=0.9586  recall_macro=0.9459
+  [METRICS] step=4200  epoch=0.3708  grad_norm=1.4751  learning_rate=0.0003  loss=0.3185
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3185', 'grad_norm': '1.475', 'learning_rate': '0.0003348', 'epoch': '0.3708'}
+  [QUICK]   step=4300  loss=0.3140  f1_macro=0.9162  f1_pos=0.8691  recall_pos=0.9617  recall_macro=0.9498
+  [METRICS] step=4300  epoch=0.3796  grad_norm=1.3144  learning_rate=0.0003  loss=0.3129
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3129', 'grad_norm': '1.314', 'learning_rate': '0.0003301', 'epoch': '0.3796'}
+  [QUICK]   step=4400  loss=0.3293  f1_macro=0.9062  f1_pos=0.8543  recall_pos=0.9647  recall_macro=0.9460
+  [METRICS] step=4400  epoch=0.3884  grad_norm=1.1533  learning_rate=0.0003  loss=0.3202
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3202', 'grad_norm': '1.153', 'learning_rate': '0.0003254', 'epoch': '0.3884'}
+  [METRICS] step=4500  epoch=0.3973  grad_norm=1.2948  learning_rate=0.0003  loss=0.3163
+{'loss': '0.3163', 'grad_norm': '1.295', 'learning_rate': '0.0003207', 'epoch': '0.3973'}
+  [METRICS] step=4500  epoch=0.3973  eval_accuracy=0.9400  eval_f1_macro=0.9131  eval_f1_pos=0.8647  eval_loss=0.3159  eval_pr_auc=0.9640  eval_recall_macro=0.9504  eval_recall_pos=0.9675  eval_roc_auc=0.9898  eval_runtime=429.5198  eval_samples_per_second=139.6910  eval_steps_per_second=8.7310
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'eval_loss': '0.3159', 'eval_accuracy': '0.94', 'eval_f1_macro': '0.9131', 'eval_f1_pos': '0.8647', 'eval_recall_pos': '0.9675', 'eval_recall_macro': '0.9504', 'eval_roc_auc': '0.9898', 'eval_pr_auc': '0.964', 'eval_runtime': '429.5', 'eval_samples_per_second': '139.7', 'eval_steps_per_second': '8.731', 'epoch': '0.3973'}
+  [QUICK]   step=4600  loss=0.3061  f1_macro=0.9290  f1_pos=0.8868  recall_pos=0.9051  recall_macro=0.9357
+  [METRICS] step=4600  epoch=0.4061  grad_norm=4.4815  learning_rate=0.0003  loss=0.3074
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3074', 'grad_norm': '4.482', 'learning_rate': '0.000316', 'epoch': '0.4061'}
+  [QUICK]   step=4700  loss=0.3025  f1_macro=0.9293  f1_pos=0.8886  recall_pos=0.9495  recall_macro=0.9516
+  [METRICS] step=4700  epoch=0.4149  grad_norm=2.1033  learning_rate=0.0003  loss=0.3159
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3159', 'grad_norm': '2.103', 'learning_rate': '0.0003113', 'epoch': '0.4149'}
+  [QUICK]   step=4800  loss=0.3169  f1_macro=0.9133  f1_pos=0.8649  recall_pos=0.9627  recall_macro=0.9488
+  [METRICS] step=4800  epoch=0.4237  grad_norm=1.6320  learning_rate=0.0003  loss=0.3160
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.316', 'grad_norm': '1.632', 'learning_rate': '0.0003066', 'epoch': '0.4237'}
+  [QUICK]   step=4900  loss=0.2961  f1_macro=0.9332  f1_pos=0.8942  recall_pos=0.9384  recall_macro=0.9494
+  [METRICS] step=4900  epoch=0.4326  grad_norm=1.1679  learning_rate=0.0003  loss=0.3291
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3291', 'grad_norm': '1.168', 'learning_rate': '0.0003019', 'epoch': '0.4326'}
+  [QUICK]   step=5000  loss=0.3311  f1_macro=0.9141  f1_pos=0.8661  recall_pos=0.9627  recall_macro=0.9492
+  [METRICS] step=5000  epoch=0.4414  grad_norm=1.3470  learning_rate=0.0003  loss=0.3153
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3153', 'grad_norm': '1.347', 'learning_rate': '0.0002972', 'epoch': '0.4414'}
+  [QUICK]   step=5100  loss=0.2962  f1_macro=0.9310  f1_pos=0.8911  recall_pos=0.9495  recall_macro=0.9523
+  [METRICS] step=5100  epoch=0.4502  grad_norm=3.9432  learning_rate=0.0003  loss=0.3126
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3126', 'grad_norm': '3.943', 'learning_rate': '0.0002925', 'epoch': '0.4502'}
+  [QUICK]   step=5200  loss=0.3057  f1_macro=0.9244  f1_pos=0.8815  recall_pos=0.9606  recall_macro=0.9533
+  [METRICS] step=5200  epoch=0.4591  grad_norm=1.1200  learning_rate=0.0003  loss=0.3127
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3127', 'grad_norm': '1.12', 'learning_rate': '0.0002878', 'epoch': '0.4591'}
+  [QUICK]   step=5300  loss=0.3175  f1_macro=0.9157  f1_pos=0.8683  recall_pos=0.9617  recall_macro=0.9495
+  [METRICS] step=5300  epoch=0.4679  grad_norm=1.2052  learning_rate=0.0003  loss=0.3138
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3138', 'grad_norm': '1.205', 'learning_rate': '0.0002831', 'epoch': '0.4679'}
+  [QUICK]   step=5400  loss=0.3373  f1_macro=0.9036  f1_pos=0.8510  recall_pos=0.9738  recall_macro=0.9480
+  [METRICS] step=5400  epoch=0.4767  grad_norm=4.3855  learning_rate=0.0003  loss=0.3164
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3164', 'grad_norm': '4.385', 'learning_rate': '0.0002784', 'epoch': '0.4767'}
+  [QUICK]   step=5500  loss=0.3208  f1_macro=0.9112  f1_pos=0.8618  recall_pos=0.9657  recall_macro=0.9488
+  [METRICS] step=5500  epoch=0.4855  grad_norm=0.7068  learning_rate=0.0003  loss=0.3143
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3143', 'grad_norm': '0.7068', 'learning_rate': '0.0002737', 'epoch': '0.4855'}
+  [QUICK]   step=5600  loss=0.3034  f1_macro=0.9336  f1_pos=0.8941  recall_pos=0.9112  recall_macro=0.9399
+  [METRICS] step=5600  epoch=0.4944  grad_norm=0.9748  learning_rate=0.0003  loss=0.3094
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3094', 'grad_norm': '0.9748', 'learning_rate': '0.000269', 'epoch': '0.4944'}
+  [QUICK]   step=5700  loss=0.3090  f1_macro=0.9182  f1_pos=0.8721  recall_pos=0.9596  recall_macro=0.9500
+  [METRICS] step=5700  epoch=0.5032  grad_norm=1.6051  learning_rate=0.0003  loss=0.3181
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3181', 'grad_norm': '1.605', 'learning_rate': '0.0002643', 'epoch': '0.5032'}
+  [QUICK]   step=5800  loss=0.3049  f1_macro=0.9231  f1_pos=0.8794  recall_pos=0.9566  recall_macro=0.9512
+  [METRICS] step=5800  epoch=0.5120  grad_norm=2.5052  learning_rate=0.0003  loss=0.3108
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3108', 'grad_norm': '2.505', 'learning_rate': '0.0002596', 'epoch': '0.512'}
+  [QUICK]   step=5900  loss=0.3141  f1_macro=0.9160  f1_pos=0.8691  recall_pos=0.9677  recall_macro=0.9518
+  [METRICS] step=5900  epoch=0.5209  grad_norm=0.9358  learning_rate=0.0003  loss=0.3068
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3068', 'grad_norm': '0.9358', 'learning_rate': '0.0002549', 'epoch': '0.5209'}
+  [METRICS] step=6000  epoch=0.5297  grad_norm=0.9194  learning_rate=0.0003  loss=0.3145
+{'loss': '0.3145', 'grad_norm': '0.9194', 'learning_rate': '0.0002502', 'epoch': '0.5297'}
+  [METRICS] step=6000  epoch=0.5297  eval_accuracy=0.9539  eval_f1_macro=0.9310  eval_f1_pos=0.8913  eval_loss=0.2965  eval_pr_auc=0.9657  eval_recall_macro=0.9535  eval_recall_pos=0.9527  eval_roc_auc=0.9901  eval_runtime=426.9829  eval_samples_per_second=140.5210  eval_steps_per_second=8.7830
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'eval_loss': '0.2965', 'eval_accuracy': '0.9539', 'eval_f1_macro': '0.931', 'eval_f1_pos': '0.8913', 'eval_recall_pos': '0.9527', 'eval_recall_macro': '0.9535', 'eval_roc_auc': '0.9901', 'eval_pr_auc': '0.9657', 'eval_runtime': '427', 'eval_samples_per_second': '140.5', 'eval_steps_per_second': '8.783', 'epoch': '0.5297'}
+  [QUICK]   step=6100  loss=0.3006  f1_macro=0.9316  f1_pos=0.8915  recall_pos=0.9284  recall_macro=0.9451
+  [METRICS] step=6100  epoch=0.5385  grad_norm=1.7326  learning_rate=0.0002  loss=0.2951
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.2951', 'grad_norm': '1.733', 'learning_rate': '0.0002455', 'epoch': '0.5385'}
+  [QUICK]   step=6200  loss=0.3273  f1_macro=0.9078  f1_pos=0.8568  recall_pos=0.9657  recall_macro=0.9472
+  [METRICS] step=6200  epoch=0.5473  grad_norm=0.9739  learning_rate=0.0002  loss=0.3116
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3116', 'grad_norm': '0.9739', 'learning_rate': '0.0002408', 'epoch': '0.5473'}
+  [QUICK]   step=6300  loss=0.3011  f1_macro=0.9275  f1_pos=0.8861  recall_pos=0.9576  recall_macro=0.9536
+  [METRICS] step=6300  epoch=0.5562  grad_norm=2.6621  learning_rate=0.0002  loss=0.3151
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3151', 'grad_norm': '2.662', 'learning_rate': '0.0002361', 'epoch': '0.5562'}
+  [QUICK]   step=6400  loss=0.3213  f1_macro=0.9158  f1_pos=0.8687  recall_pos=0.9647  recall_macro=0.9507
+  [METRICS] step=6400  epoch=0.5650  grad_norm=1.8546  learning_rate=0.0002  loss=0.3078
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3078', 'grad_norm': '1.855', 'learning_rate': '0.0002315', 'epoch': '0.565'}
+  [QUICK]   step=6500  loss=0.2973  f1_macro=0.9324  f1_pos=0.8934  recall_pos=0.9516  recall_macro=0.9537
+  [METRICS] step=6500  epoch=0.5738  grad_norm=2.1284  learning_rate=0.0002  loss=0.3071
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3071', 'grad_norm': '2.128', 'learning_rate': '0.0002268', 'epoch': '0.5738'}
+  [QUICK]   step=6600  loss=0.3122  f1_macro=0.9203  f1_pos=0.8753  recall_pos=0.9637  recall_macro=0.9524
+  [METRICS] step=6600  epoch=0.5827  grad_norm=1.2507  learning_rate=0.0002  loss=0.2982
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.2982', 'grad_norm': '1.251', 'learning_rate': '0.0002221', 'epoch': '0.5827'}
+  [QUICK]   step=6700  loss=0.2930  f1_macro=0.9322  f1_pos=0.8931  recall_pos=0.9526  recall_macro=0.9540
+  [METRICS] step=6700  epoch=0.5915  grad_norm=1.3427  learning_rate=0.0002  loss=0.3102
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3102', 'grad_norm': '1.343', 'learning_rate': '0.0002174', 'epoch': '0.5915'}
+  [QUICK]   step=6800  loss=0.3165  f1_macro=0.9170  f1_pos=0.8705  recall_pos=0.9667  recall_macro=0.9519
+  [METRICS] step=6800  epoch=0.6003  grad_norm=1.6586  learning_rate=0.0002  loss=0.3079
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3079', 'grad_norm': '1.659', 'learning_rate': '0.0002127', 'epoch': '0.6003'}
+  [QUICK]   step=6900  loss=0.3319  f1_macro=0.9045  f1_pos=0.8522  recall_pos=0.9748  recall_macro=0.9487
+  [METRICS] step=6900  epoch=0.6091  grad_norm=1.4175  learning_rate=0.0002  loss=0.3061
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3061', 'grad_norm': '1.417', 'learning_rate': '0.000208', 'epoch': '0.6091'}
+  [QUICK]   step=7000  loss=0.2934  f1_macro=0.9344  f1_pos=0.8963  recall_pos=0.9465  recall_macro=0.9528
+  [METRICS] step=7000  epoch=0.6180  grad_norm=1.0382  learning_rate=0.0002  loss=0.3121
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3121', 'grad_norm': '1.038', 'learning_rate': '0.0002033', 'epoch': '0.618'}
+  [QUICK]   step=7100  loss=0.3224  f1_macro=0.9151  f1_pos=0.8678  recall_pos=0.9707  recall_macro=0.9524
+  [METRICS] step=7100  epoch=0.6268  grad_norm=1.3933  learning_rate=0.0002  loss=0.3131
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3131', 'grad_norm': '1.393', 'learning_rate': '0.0001986', 'epoch': '0.6268'}
+  [QUICK]   step=7200  loss=0.3036  f1_macro=0.9249  f1_pos=0.8822  recall_pos=0.9596  recall_macro=0.9531
+  [METRICS] step=7200  epoch=0.6356  grad_norm=0.9358  learning_rate=0.0002  loss=0.3137
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3137', 'grad_norm': '0.9358', 'learning_rate': '0.0001939', 'epoch': '0.6356'}
+  [QUICK]   step=7300  loss=0.3175  f1_macro=0.9187  f1_pos=0.8729  recall_pos=0.9637  recall_macro=0.9517
+  [METRICS] step=7300  epoch=0.6444  grad_norm=1.2204  learning_rate=0.0002  loss=0.3102
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3102', 'grad_norm': '1.22', 'learning_rate': '0.0001892', 'epoch': '0.6444'}
+  [QUICK]   step=7400  loss=0.3033  f1_macro=0.9293  f1_pos=0.8888  recall_pos=0.9556  recall_macro=0.9537
+  [METRICS] step=7400  epoch=0.6533  grad_norm=1.5092  learning_rate=0.0002  loss=0.2982
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.2982', 'grad_norm': '1.509', 'learning_rate': '0.0001845', 'epoch': '0.6533'}
+  [METRICS] step=7500  epoch=0.6621  grad_norm=0.6339  learning_rate=0.0002  loss=0.3047
+{'loss': '0.3047', 'grad_norm': '0.6339', 'learning_rate': '0.0001798', 'epoch': '0.6621'}
+  [METRICS] step=7500  epoch=0.6621  eval_accuracy=0.9606  eval_f1_macro=0.9397  eval_f1_pos=0.9042  eval_loss=0.2897  eval_pr_auc=0.9681  eval_recall_macro=0.9525  eval_recall_pos=0.9391  eval_roc_auc=0.9910  eval_runtime=427.2197  eval_samples_per_second=140.4430  eval_steps_per_second=8.7780
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'eval_loss': '0.2897', 'eval_accuracy': '0.9606', 'eval_f1_macro': '0.9397', 'eval_f1_pos': '0.9042', 'eval_recall_pos': '0.9391', 'eval_recall_macro': '0.9525', 'eval_roc_auc': '0.991', 'eval_pr_auc': '0.9681', 'eval_runtime': '427.2', 'eval_samples_per_second': '140.4', 'eval_steps_per_second': '8.778', 'epoch': '0.6621'}
+  [QUICK]   step=7600  loss=0.3184  f1_macro=0.9155  f1_pos=0.8682  recall_pos=0.9637  recall_macro=0.9502
+  [METRICS] step=7600  epoch=0.6709  grad_norm=1.8234  learning_rate=0.0002  loss=0.3061
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3061', 'grad_norm': '1.823', 'learning_rate': '0.0001751', 'epoch': '0.6709'}
+  [QUICK]   step=7700  loss=0.3083  f1_macro=0.9226  f1_pos=0.8789  recall_pos=0.9667  recall_macro=0.9545
+  [METRICS] step=7700  epoch=0.6798  grad_norm=1.8257  learning_rate=0.0002  loss=0.3006
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3006', 'grad_norm': '1.826', 'learning_rate': '0.0001704', 'epoch': '0.6798'}
+  [QUICK]   step=7800  loss=0.3100  f1_macro=0.9214  f1_pos=0.8771  recall_pos=0.9647  recall_macro=0.9533
+  [METRICS] step=7800  epoch=0.6886  grad_norm=1.9115  learning_rate=0.0002  loss=0.3078
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3078', 'grad_norm': '1.912', 'learning_rate': '0.0001657', 'epoch': '0.6886'}
+  [QUICK]   step=7900  loss=0.2992  f1_macro=0.9290  f1_pos=0.8882  recall_pos=0.9495  recall_macro=0.9515
+  [METRICS] step=7900  epoch=0.6974  grad_norm=1.2154  learning_rate=0.0002  loss=0.3004
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3004', 'grad_norm': '1.215', 'learning_rate': '0.000161', 'epoch': '0.6974'}
+  [QUICK]   step=8000  loss=0.2940  f1_macro=0.9318  f1_pos=0.8923  recall_pos=0.9485  recall_macro=0.9523
+  [METRICS] step=8000  epoch=0.7062  grad_norm=4.0692  learning_rate=0.0002  loss=0.3023
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3023', 'grad_norm': '4.069', 'learning_rate': '0.0001563', 'epoch': '0.7062'}
+  [QUICK]   step=8100  loss=0.3198  f1_macro=0.9149  f1_pos=0.8677  recall_pos=0.9728  recall_macro=0.9531
+  [METRICS] step=8100  epoch=0.7151  grad_norm=1.4498  learning_rate=0.0002  loss=0.3037
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3037', 'grad_norm': '1.45', 'learning_rate': '0.0001516', 'epoch': '0.7151'}
+  [QUICK]   step=8200  loss=0.3038  f1_macro=0.9249  f1_pos=0.8826  recall_pos=0.9707  recall_macro=0.9571
+  [METRICS] step=8200  epoch=0.7239  grad_norm=1.5387  learning_rate=0.0001  loss=0.3154
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3154', 'grad_norm': '1.539', 'learning_rate': '0.0001469', 'epoch': '0.7239'}
+  [QUICK]   step=8300  loss=0.2928  f1_macro=0.9364  f1_pos=0.8994  recall_pos=0.9475  recall_macro=0.9541
+  [METRICS] step=8300  epoch=0.7327  grad_norm=0.9046  learning_rate=0.0001  loss=0.3051
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3051', 'grad_norm': '0.9046', 'learning_rate': '0.0001422', 'epoch': '0.7327'}
+  [QUICK]   step=8400  loss=0.2966  f1_macro=0.9286  f1_pos=0.8877  recall_pos=0.9576  recall_macro=0.9541
+  [METRICS] step=8400  epoch=0.7416  grad_norm=1.1449  learning_rate=0.0001  loss=0.3060
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.306', 'grad_norm': '1.145', 'learning_rate': '0.0001375', 'epoch': '0.7416'}
+  [QUICK]   step=8500  loss=0.3084  f1_macro=0.9233  f1_pos=0.8801  recall_pos=0.9707  recall_macro=0.9563
+  [METRICS] step=8500  epoch=0.7504  grad_norm=1.1236  learning_rate=0.0001  loss=0.3179
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3179', 'grad_norm': '1.124', 'learning_rate': '0.0001328', 'epoch': '0.7504'}
+  [QUICK]   step=8600  loss=0.3019  f1_macro=0.9295  f1_pos=0.8894  recall_pos=0.9657  recall_macro=0.9574
+  [METRICS] step=8600  epoch=0.7592  grad_norm=1.1287  learning_rate=0.0001  loss=0.2918
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.2918', 'grad_norm': '1.129', 'learning_rate': '0.0001281', 'epoch': '0.7592'}
+  [QUICK]   step=8700  loss=0.3024  f1_macro=0.9249  f1_pos=0.8824  recall_pos=0.9657  recall_macro=0.9553
+  [METRICS] step=8700  epoch=0.7680  grad_norm=1.0010  learning_rate=0.0001  loss=0.3063
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3063', 'grad_norm': '1.001', 'learning_rate': '0.0001235', 'epoch': '0.768'}
+  [QUICK]   step=8800  loss=0.2942  f1_macro=0.9319  f1_pos=0.8929  recall_pos=0.9637  recall_macro=0.9578
+  [METRICS] step=8800  epoch=0.7769  grad_norm=1.0649  learning_rate=0.0001  loss=0.3058
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3058', 'grad_norm': '1.065', 'learning_rate': '0.0001188', 'epoch': '0.7769'}
+  [QUICK]   step=8900  loss=0.3138  f1_macro=0.9147  f1_pos=0.8673  recall_pos=0.9728  recall_macro=0.9530
+  [METRICS] step=8900  epoch=0.7857  grad_norm=1.5910  learning_rate=0.0001  loss=0.2973
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.2973', 'grad_norm': '1.591', 'learning_rate': '0.0001141', 'epoch': '0.7857'}
+  [METRICS] step=9000  epoch=0.7945  grad_norm=1.2581  learning_rate=0.0001  loss=0.2878
+{'loss': '0.2878', 'grad_norm': '1.258', 'learning_rate': '0.0001094', 'epoch': '0.7945'}
+  [METRICS] step=9000  epoch=0.7945  eval_accuracy=0.9528  eval_f1_macro=0.9301  eval_f1_pos=0.8901  eval_loss=0.2969  eval_pr_auc=0.9698  eval_recall_macro=0.9570  eval_recall_pos=0.9640  eval_roc_auc=0.9914  eval_runtime=428.2948  eval_samples_per_second=140.0900  eval_steps_per_second=8.7560
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'eval_loss': '0.2969', 'eval_accuracy': '0.9528', 'eval_f1_macro': '0.9301', 'eval_f1_pos': '0.8901', 'eval_recall_pos': '0.964', 'eval_recall_macro': '0.957', 'eval_roc_auc': '0.9914', 'eval_pr_auc': '0.9698', 'eval_runtime': '428.3', 'eval_samples_per_second': '140.1', 'eval_steps_per_second': '8.756', 'epoch': '0.7945'}
+  [QUICK]   step=9100  loss=0.3200  f1_macro=0.9176  f1_pos=0.8716  recall_pos=0.9728  recall_macro=0.9543
+  [METRICS] step=9100  epoch=0.8034  grad_norm=2.8304  learning_rate=0.0001  loss=0.2960
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.296', 'grad_norm': '2.83', 'learning_rate': '0.0001047', 'epoch': '0.8034'}
+  [QUICK]   step=9200  loss=0.2999  f1_macro=0.9283  f1_pos=0.8873  recall_pos=0.9617  recall_macro=0.9554
+  [METRICS] step=9200  epoch=0.8122  grad_norm=0.9591  learning_rate=0.0001  loss=0.2946
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.2946', 'grad_norm': '0.9591', 'learning_rate': '9.997e-05', 'epoch': '0.8122'}
+  [QUICK]   step=9300  loss=0.2932  f1_macro=0.9341  f1_pos=0.8960  recall_pos=0.9516  recall_macro=0.9545
+  [METRICS] step=9300  epoch=0.8210  grad_norm=1.3845  learning_rate=0.0001  loss=0.2954
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.2954', 'grad_norm': '1.384', 'learning_rate': '9.528e-05', 'epoch': '0.821'}
+  [QUICK]   step=9400  loss=0.3039  f1_macro=0.9219  f1_pos=0.8780  recall_pos=0.9697  recall_macro=0.9553
+  [METRICS] step=9400  epoch=0.8298  grad_norm=3.7859  learning_rate=0.0001  loss=0.3082
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3082', 'grad_norm': '3.786', 'learning_rate': '9.058e-05', 'epoch': '0.8298'}
+  [QUICK]   step=9500  loss=0.2932  f1_macro=0.9322  f1_pos=0.8935  recall_pos=0.9647  recall_macro=0.9583
+  [METRICS] step=9500  epoch=0.8387  grad_norm=1.4811  learning_rate=0.0001  loss=0.3031
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3031', 'grad_norm': '1.481', 'learning_rate': '8.588e-05', 'epoch': '0.8387'}
+  [QUICK]   step=9600  loss=0.3118  f1_macro=0.9222  f1_pos=0.8784  recall_pos=0.9697  recall_macro=0.9554
+  [METRICS] step=9600  epoch=0.8475  grad_norm=1.3058  learning_rate=0.0001  loss=0.2966
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.2966', 'grad_norm': '1.306', 'learning_rate': '8.119e-05', 'epoch': '0.8475'}
+  [QUICK]   step=9700  loss=0.3068  f1_macro=0.9214  f1_pos=0.8772  recall_pos=0.9697  recall_macro=0.9551
+  [METRICS] step=9700  epoch=0.8563  grad_norm=2.1861  learning_rate=0.0001  loss=0.3091
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3091', 'grad_norm': '2.186', 'learning_rate': '7.649e-05', 'epoch': '0.8563'}
+  [QUICK]   step=9800  loss=0.3057  f1_macro=0.9224  f1_pos=0.8787  recall_pos=0.9687  recall_macro=0.9552
+  [METRICS] step=9800  epoch=0.8652  grad_norm=1.1853  learning_rate=0.0001  loss=0.2969
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.2969', 'grad_norm': '1.185', 'learning_rate': '7.18e-05', 'epoch': '0.8652'}
+  [QUICK]   step=9900  loss=0.3041  f1_macro=0.9227  f1_pos=0.8792  recall_pos=0.9697  recall_macro=0.9557
+  [METRICS] step=9900  epoch=0.8740  grad_norm=1.1773  learning_rate=0.0001  loss=0.3067
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3067', 'grad_norm': '1.177', 'learning_rate': '6.71e-05', 'epoch': '0.874'}
+  [QUICK]   step=10000  loss=0.2976  f1_macro=0.9298  f1_pos=0.8898  recall_pos=0.9657  recall_macro=0.9575
+  [METRICS] step=10000  epoch=0.8828  grad_norm=1.2862  learning_rate=0.0001  loss=0.2983
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.2983', 'grad_norm': '1.286', 'learning_rate': '6.241e-05', 'epoch': '0.8828'}
+  [QUICK]   step=10100  loss=0.3023  f1_macro=0.9239  f1_pos=0.8808  recall_pos=0.9657  recall_macro=0.9548
+  [METRICS] step=10100  epoch=0.8916  grad_norm=1.6065  learning_rate=0.0001  loss=0.3007
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3007', 'grad_norm': '1.606', 'learning_rate': '5.771e-05', 'epoch': '0.8916'}
+  [QUICK]   step=10200  loss=0.2968  f1_macro=0.9277  f1_pos=0.8867  recall_pos=0.9677  recall_macro=0.9573
+  [METRICS] step=10200  epoch=0.9005  grad_norm=1.3118  learning_rate=0.0001  loss=0.2966
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.2966', 'grad_norm': '1.312', 'learning_rate': '5.301e-05', 'epoch': '0.9005'}
+  [QUICK]   step=10300  loss=0.3015  f1_macro=0.9232  f1_pos=0.8799  recall_pos=0.9687  recall_macro=0.9555
+  [METRICS] step=10300  epoch=0.9093  grad_norm=1.4852  learning_rate=0.0000  loss=0.2996
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.2996', 'grad_norm': '1.485', 'learning_rate': '4.832e-05', 'epoch': '0.9093'}
+  [QUICK]   step=10400  loss=0.2951  f1_macro=0.9293  f1_pos=0.8890  recall_pos=0.9657  recall_macro=0.9573
+  [METRICS] step=10400  epoch=0.9181  grad_norm=1.6450  learning_rate=0.0000  loss=0.3079
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+{'loss': '0.3079', 'grad_norm': '1.645', 'learning_rate': '4.362e-05', 'epoch': '0.9181'}
+  [METRICS] step=10500  epoch=0.9269  grad_norm=1.2180  learning_rate=0.0000  loss=0.3100
+{'loss': '0.31', 'grad_norm': '1.218', 'learning_rate': '3.893e-05', 'epoch': '0.9269'}
+  [METRICS] step=10500  epoch=0.9269  eval_accuracy=0.9558  eval_f1_macro=0.9340  eval_f1_pos=0.8960  eval_loss=0.2897  eval_pr_auc=0.9707  eval_recall_macro=0.9572  eval_recall_pos=0.9595  eval_roc_auc=0.9917  eval_runtime=427.1193  eval_samples_per_second=140.4760  eval_steps_per_second=8.7800
+{'eval_loss': '0.2897', 'eval_accuracy': '0.9558', 'eval_f1_macro': '0.934', 'eval_f1_pos': '0.896', 'eval_recall_pos': '0.9595', 'eval_recall_macro': '0.9572', 'eval_roc_auc': '0.9917', 'eval_pr_auc': '0.9707', 'eval_runtime': '427.1', 'eval_samples_per_second': '140.5', 'eval_steps_per_second': '8.78', 'epoch': '0.9269'}
+  [METRICS] step=10500  epoch=0.9269  total_flos=0.0000  train_loss=0.3268  train_runtime=22744.2862  train_samples_per_second=31.8740  train_steps_per_second=0.4980
+{'train_runtime': '2.274e+04', 'train_samples_per_second': '31.87', 'train_steps_per_second': '0.498', 'train_loss': '0.3268', 'epoch': '0.9269'}
+  -> Training done in 381.4 min
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]
+  [METRICS] step=10500  epoch=0.9269  eval_accuracy=0.9606  eval_f1_macro=0.9397  eval_f1_pos=0.9042  eval_loss=0.2897  eval_pr_auc=0.9681  eval_recall_macro=0.9525  eval_recall_pos=0.9391  eval_roc_auc=0.9910  eval_runtime=426.8503  eval_samples_per_second=140.5640  eval_steps_per_second=8.7850
+{'eval_loss': '0.2897', 'eval_accuracy': '0.9606', 'eval_f1_macro': '0.9397', 'eval_f1_pos': '0.9042', 'eval_recall_pos': '0.9391', 'eval_recall_macro': '0.9525', 'eval_roc_auc': '0.991', 'eval_pr_auc': '0.9681', 'eval_runtime': '426.9', 'eval_samples_per_second': '140.6', 'eval_steps_per_second': '8.785', 'epoch': '0.9269'}
+  -> VAL metrics (subset 60,000): {'eval_loss': 0.2897, 'eval_accuracy': 0.9606, 'eval_f1_macro': 0.9397, 'eval_f1_pos': 0.9042, 'eval_recall_pos': 0.9391, 'eval_recall_macro': 0.9525, 'eval_roc_auc': 0.991, 'eval_pr_auc': 0.9681, 'eval_runtime': 426.8503, 'eval_samples_per_second': 140.564, 'eval_steps_per_second': 8.785, 'epoch': 0.9269}
+/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py:583: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+  return super().apply(*args, **kwargs)  # type: ignore[misc]

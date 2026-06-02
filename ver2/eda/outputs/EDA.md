@@ -127,9 +127,9 @@ Chỉ có **5 subreddit chính** chiếm 99.96% dataset; còn lại 19 subreddit
 - `r/teenagers` + `r/happy` + `r/DeepThoughts` → 0% label=1
 
 **Hệ quả:**
-- Mutual Information của `subreddit` với label = **0.71 bits** (cao nhất trong tất cả features)
+- Mutual Information của `subreddit` với label = **0.71 bits** ≈ entropy của label → subreddit gần như **là bản sao của target**, không phải feature
 - Model chỉ cần biết subreddit là predict được label gần như 100%
-- → **Đây là data leakage tiềm tàng** nếu Stage 2 LGBM dùng `subreddit` làm feature
+- → **Quyết định (post-EDA): PURGE subreddit + mọi proxy** (`upvotes_pct_in_subreddit`, `year`) khỏi Stage 2. Tiêu chí giữ feature: *tính được từ 1 post đơn lẻ mà không cần biết subreddit*. Subreddit chỉ dùng ở khâu đánh giá (per-subreddit F1 diagnostic + cross-subreddit holdout), không bao giờ là input model.
 - Class 1 concentration: **2 subreddit** (depression + SuicideWatch) cover **95%+** positives
 
 ### 4.3 Long tail của subreddit
@@ -146,7 +146,7 @@ Chỉ có **5 subreddit chính** chiếm 99.96% dataset; còn lại 19 subreddit
 | 10k-100k rows | 1 |
 | 100k+ rows | 3 |
 
-→ Pattern **bimodal extreme**: 3 sub khổng lồ + 19 sub tí hon. Cần bucket rare subreddit thành `_rare_` trước khi đưa vào LGBM (đã làm trong [03_features.py](../03_features.py)).
+→ Pattern **bimodal extreme**: 3 sub khổng lồ + 19 sub tí hon. **Quyết định (post-EDA):** subreddit bị **loại hoàn toàn** khỏi feature Stage 2 (xem 4.2 + tech_plan section 6) nên rare-bucketing không còn ý nghĩa — subreddit chỉ derive label rồi drop.
 
 ---
 
@@ -455,15 +455,16 @@ Clip tại **p99.5** để bỏ tail extreme:
 | `hour_utc` | 0.0005 |
 
 **Insight quan trọng:**
-- `subreddit` chiếm **4.2× MI** của feature thứ 2 → quá dominant
-- Nếu cho LGBM dùng `subreddit` → model sẽ chỉ học `subreddit → label`, các feature khác (text, engagement) sẽ bị bỏ qua
-- → **Bắt buộc** chạy ablation **không có `subreddit`** trong Stage 2 để đo true contribution của text + temporal + engagement
+- `subreddit` chiếm **4.2× MI** của feature thứ 2, và MI=0.71 ≈ H(label) → đây là **bản sao của target**, không phải feature
+- Nếu cho LGBM dùng `subreddit` → model chỉ học `subreddit → label` (F1≈1.0 trivial), các feature khác bị bỏ qua
+- `year` (MI=0.078) cũng là **proxy của subreddit** (thành phần subreddit đổi theo năm) + vỡ dưới time-split → loại luôn
+- → **Quyết định: PURGE subreddit + year + upvotes_pct_in_subreddit.** Stage 2 dùng **một feature set subreddit-blind duy nhất** (không train "version có subreddit")
 
-**Recommended ablation runs (Stage 2 LGBM):**
-1. Full features (baseline ceiling)
-2. **Không có subreddit** (true generalization)
-3. Chỉ có `p_text` (Stage 1 output) — pure text contribution
-4. `p_text` + temporal + engagement (no subreddit) — production-realistic
+**Stage 2 LGBM variants (đều subreddit-blind):**
+1. **Full ensemble**: `p_text` + meta (text-derived + engagement + temporal) — **kết quả chính**
+2. Metadata-only (no `p_text`) — baseline đo đóng góp của text
+3. Chỉ `p_text` (Stage 1 output) — pure text contribution
+4. **Cross-subreddit holdout** (train trên 3 sub → test 2 sub khác) — đo content-understanding thực sự
 
 ---
 
@@ -541,10 +542,11 @@ Xem chi tiết 25 posts mỗi loại trong:
 
 | Setting | Value | Lý do |
 |---|---|---|
-| Categorical encoding | Native | LGBM xử lý tốt categorical |
-| Cyclical features | sin/cos cho hour, DOW, month | Khớp với pattern temporal |
+| **Subreddit feature** | **PURGE hoàn toàn** (+ proxy: `year`, `upvotes_pct_in_subreddit`) | MI=0.71 ≈ H(label) → là bản sao target, không phải feature |
+| Cyclical features | sin/cos cho hour, DOW | Khớp với pattern temporal (MI thấp nhưng rẻ) |
 | `class_weight` | 'balanced' | Imbalance ratio 4.14:1 |
-| **Critical**: ablation no-subreddit | bắt buộc | Avoid trivial signal dominance |
+| Categorical còn lại | `has_title`, `has_body` (boolean) | Post-level, không phải subreddit |
+| Eval per-subreddit | join `eval_subreddit.parquet` | Diagnostic ONLY — không nạp vào model |
 
 ### 11.5 Evaluation Metrics
 

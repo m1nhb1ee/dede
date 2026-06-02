@@ -85,7 +85,7 @@
   },
   "features": {
     "n_rows": 2470017,
-    "n_features_excluding_id_label": 26,
+    "n_features_excluding_id_label": 23,
     "columns": [
       "id",
       "title_len_chars",
@@ -95,7 +95,6 @@
       "upvotes_log",
       "num_comments_log",
       "comments_per_upvote",
-      "upvotes_pct_in_subreddit",
       "has_title",
       "has_body",
       "num_exclamations",
@@ -112,8 +111,6 @@
       "dow_cos",
       "is_weekend",
       "is_night_us_eastern",
-      "year",
-      "subreddit",
       "label"
     ],
     "has_mh_keyword_pct": 32.4539,

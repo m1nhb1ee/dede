@@ -92,9 +92,6 @@ def parse_args() -> argparse.Namespace:
                         "(val/test unchanged). 1.0 = no undersampling, "
                         "0.5 = keep 50%% of negatives. Per-fold independent "
                         "sampling with seed=SEED+fold.")
-    p.add_argument("--max_steps", type=int, default=-1,
-                   help="Hard cap on total training steps (overrides epochs). "
-                        "-1 = no cap, use epochs. Useful to bound wall-clock.")
     return p.parse_args()
 
 
@@ -213,7 +210,7 @@ def train_one(args: argparse.Namespace) -> dict:
         report_to=[],                                       # no W&B/HF Hub
         # batching + precision
         per_device_train_batch_size=HW["per_device_batch"],
-        per_device_eval_batch_size= HW["per_device_batch"] * 2,
+        per_device_eval_batch_size= HW["per_device_batch"],  # = train batch (was *2, caused OOM)
         gradient_accumulation_steps=HW["grad_accum"],
         fp16=HW["fp16"],
         gradient_checkpointing=HW["gradient_checkpointing"],
@@ -222,7 +219,6 @@ def train_one(args: argparse.Namespace) -> dict:
         dataloader_pin_memory=HW.get("dataloader_pin_memory", False),
         # schedule
         num_train_epochs=args.epochs,
-        max_steps=args.max_steps,                           # -1 = use epochs; else hard cap
         learning_rate=LR_LORA,                              # default for non-head params
         weight_decay=WEIGHT_DECAY,
         warmup_ratio=WARMUP_RATIO,
@@ -238,6 +234,7 @@ def train_one(args: argparse.Namespace) -> dict:
         greater_is_better=METRIC_GREATER_IS_BETTER,
         # logging
         logging_steps=QUICK_LOG_STEPS,
+        disable_tqdm=True,                                  # subprocess capture spams tqdm
         seed=SEED,
         # group by length: batch samples of similar length together so padding
         # per-batch shrinks to the longest in that batch (not global max_len).
@@ -295,7 +292,10 @@ def train_one(args: argparse.Namespace) -> dict:
             tr = trainer_ref[0]
             if tr is None:
                 return
+            # Free fragmented GPU cache before predict (OOM fix for DP broadcast)
+            torch.cuda.empty_cache()
             pred = tr.predict(quick_val_ds, metric_key_prefix="quick")
+            torch.cuda.empty_cache()  # also free after to release predict's peak
             m = pred.metrics or {}
             print(
                 f"  [QUICK]   step={gs}  "

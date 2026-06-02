@@ -17,6 +17,7 @@ OUT_DIR.mkdir(parents=True, exist_ok=True)
 POSTS_CLEAN_PARQUET = OUT_DIR / "posts_clean.parquet"
 SPLITS_PARQUET      = OUT_DIR / "splits.parquet"
 META_FEAT_PARQUET   = OUT_DIR / "meta_features.parquet"
+EVAL_SUBR_PARQUET   = OUT_DIR / "eval_subreddit.parquet"  # eval-only: id->subreddit, NEVER a model feature
 STATS_JSON          = OUT_DIR / "stats.json"
 
 # === Columns (mirror EDA config) ===

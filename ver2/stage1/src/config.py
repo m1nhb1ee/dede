@@ -97,7 +97,7 @@ PROFILES = {
         "per_device_batch":        8,
         "grad_accum":              4,
         "fp16":                    True,
-        "gradient_checkpointing":  False,
+        "gradient_checkpointing":  True,   # OOM safety net (~20% slower, ~40% less VRAM)
         "optim":                   "adamw_torch",     # standard AdamW
         "dataloader_num_workers":  2,
         "dataloader_pin_memory":   True,    # Kaggle has plenty of RAM

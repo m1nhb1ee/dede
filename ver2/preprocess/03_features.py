@@ -9,27 +9,33 @@ Feature priorities are set by EDA findings (tech_plan section 6.2 post-EDA):
     has_mh_keyword       (lift 4.3x; the strongest single binary feature)
     has_body             (MI=0.033 bits)
     num_comments_log     (Spearman=-0.20)
-    year                 (MI=0.078; captures drift)
 
   MID-SIGNAL:
-    upvotes_log, upvotes_pct_in_subreddit, comments_per_upvote,
+    upvotes_log, comments_per_upvote,
     title_len_chars, body_to_title_ratio,
     num_first_person, num_negative_words, num_exclamations, num_questions
 
   LOW-SIGNAL but cheap (kept for completeness + ablation):
     hour_sin, hour_cos, dow_sin, dow_cos, is_weekend, is_night_us_eastern
 
-  CATEGORICAL:
-    subreddit (string)   -- caller chooses to include or exclude (ablation)
-    has_title, has_body  -- boolean
+  BOOLEAN:
+    has_title, has_body
 
 p_text is NOT computed here -- it comes from Stage 1 OOF predictions later.
 
-Notes:
-  - upvotes_pct_in_subreddit is computed within each split independently
-    in downstream code IF we want a leak-free pct rank. Here we compute it
-    globally; the leak risk is low because the subreddit-rank distribution
-    is fairly stable. Document in tech_plan if we revise this.
+SUBREDDIT PURGE (tech_plan section 0a, 6.2/6.3):
+  Because MI(subreddit, label) = 0.71 bits ~= H(label), subreddit is a copy
+  of the target, not a feature. We exclude subreddit AND its proxies from the
+  model feature matrix entirely. Rule: a feature is allowed only if it can be
+  computed from a SINGLE post without knowing which subreddit it belongs to.
+  Removed vs the earlier version:
+    - subreddit                  -> moved to a separate eval-only file
+                                    (eval_subreddit.parquet) for per-subreddit
+                                    F1 diagnostics; NEVER fed to the model.
+    - upvotes_pct_in_subreddit   -> needs the whole-subreddit distribution.
+    - year                       -> proxy for subreddit-composition drift AND
+                                    breaks under time-split (test=2022 is an
+                                    unseen value); harmful, not neutral.
 """
 
 from __future__ import annotations
@@ -42,8 +48,8 @@ import pandas as pd
 
 from config import (
     COL_BODY, COL_ID, COL_LABEL, COL_NCMTS, COL_SUBR, COL_TIME, COL_TITLE,
-    COL_UPVOTES, FIRST_PERSON_WORDS, META_FEAT_PARQUET, MH_KEYWORDS,
-    NEGATIVE_WORDS, POSTS_CLEAN_PARQUET,
+    COL_UPVOTES, EVAL_SUBR_PARQUET, FIRST_PERSON_WORDS, META_FEAT_PARQUET,
+    MH_KEYWORDS, NEGATIVE_WORDS, POSTS_CLEAN_PARQUET,
 )
 from utils import section, step, update_stats
 
@@ -104,14 +110,8 @@ def main() -> None:
     feats["upvotes_log"]       = np.log1p(up).astype("float32")
     feats["num_comments_log"]  = np.log1p(nc).astype("float32")
     feats["comments_per_upvote"] = (nc / (up + 1)).astype("float32")
-
-    # Upvotes percentile rank within subreddit (centered cross-subreddit)
-    # Use dense rank to avoid ties dominating percentile.
-    step("Computing upvotes_pct_in_subreddit (groupby rank) ...")
-    t1 = time.perf_counter()
-    grp = df.groupby(COL_SUBR, observed=True)[COL_UPVOTES]
-    feats["upvotes_pct_in_subreddit"] = grp.rank(pct=True, method="dense").astype("float32")
-    step(f"  done in {time.perf_counter()-t1:.1f}s")
+    # NOTE: upvotes_pct_in_subreddit intentionally removed -- it needs the
+    # whole-subreddit distribution to compute (subreddit-proxy leak).
 
     # ── Boolean indicators ───────────────────────────────────────────────
     feats["has_title"] = df["has_title"].astype("bool")
@@ -152,7 +152,6 @@ def main() -> None:
     dt = pd.to_datetime(df[COL_TIME], unit="s", utc=True)
     hour = dt.dt.hour.values
     dow  = dt.dt.weekday.values
-    year = dt.dt.year.values
 
     feats["hour_sin"] = np.sin(2 * np.pi * hour / 24).astype("float32")
     feats["hour_cos"] = np.cos(2 * np.pi * hour / 24).astype("float32")
@@ -160,10 +159,8 @@ def main() -> None:
     feats["dow_cos"]  = np.cos(2 * np.pi * dow  /  7).astype("float32")
     feats["is_weekend"]          = (dow >= 5).astype("bool")
     feats["is_night_us_eastern"] = np.isin(hour, [4, 5, 6, 7, 8, 9]).astype("bool")
-    feats["year"] = year.astype("int16")
-
-    # ── Categorical (string, LGBM handles natively) ──────────────────────
-    feats[COL_SUBR] = df[COL_SUBR].astype(str).values
+    # NOTE: 'year' intentionally removed -- subreddit-composition proxy and it
+    # breaks under time-split (test=2022 is an unseen value at train time).
 
     # ── Carry label (handy for training; redundant with posts_clean) ─────
     feats[COL_LABEL] = df[COL_LABEL].astype("int8").values
@@ -178,6 +175,18 @@ def main() -> None:
     step(f"Feature columns ({len(feats.columns)}):")
     for c in feats.columns:
         print(f"      {c:<28} {feats[c].dtype}")
+
+    # ── Eval-only subreddit lookup (id -> subreddit). For per-subreddit F1
+    #    diagnostics ONLY. Kept in a SEPARATE file so it can never accidentally
+    #    be loaded as a model feature. ─────────────────────────────────────
+    eval_subr = pd.DataFrame({
+        COL_ID:   df[COL_ID].values,
+        COL_SUBR: df[COL_SUBR].astype(str).values,
+    })
+    eval_subr.to_parquet(EVAL_SUBR_PARQUET, engine="pyarrow",
+                         compression="snappy", index=False)
+    step(f"Wrote eval-only subreddit lookup {EVAL_SUBR_PARQUET} "
+         f"({EVAL_SUBR_PARQUET.stat().st_size / 1e6:.1f} MB) -- NOT a model feature")
 
     update_stats("features", {
         "n_rows": int(len(feats)),
