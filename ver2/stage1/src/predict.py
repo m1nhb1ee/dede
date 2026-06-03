@@ -179,6 +179,8 @@ def reinfer(ckpt_dir: str, split: str, model_dir: str | None = None) -> Path:
         fp16=True, report_to=[],
         dataloader_num_workers=0,
         remove_unused_columns=False,
+        group_by_length=False,   # MUST stay False: True reorders eval output
+                                 # and misaligns p_text with id/label.
     )
     trainer = Trainer(
         model=model, args=args,
@@ -191,10 +193,20 @@ def reinfer(ckpt_dir: str, split: str, model_dir: str | None = None) -> Path:
         logits = logits.squeeze(-1)
     probs = 1.0 / (1.0 + np.exp(-logits))
 
+    labels_arr = np.asarray(ds_pred["labels"], dtype=np.int8)
+    if labels_arr.min() != labels_arr.max():
+        gap = probs[labels_arr == 1].mean() - probs[labels_arr == 0].mean()
+        print(f"  sanity: mean p_text(pos)-(neg) = {gap:+.4f}")
+        if gap < 0.05:
+            raise RuntimeError(
+                f"p_text appears MISALIGNED with labels (gap={gap:+.4f}). "
+                f"Check group_by_length. NOT saving."
+            )
+
     out = pd.DataFrame({
         "id":     list(ds_pred["id"]),
         "p_text": probs.astype(np.float32),
-        "label":  np.asarray(ds_pred["labels"], dtype=np.int8),
+        "label":  labels_arr,
     })
     out_path = PRED_DIR / f"reinfer_{split}_{ckpt_path.name}.parquet"
     out.to_parquet(out_path, engine="pyarrow", compression="snappy", index=False)

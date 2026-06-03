@@ -345,6 +345,14 @@ def train_one(args: argparse.Namespace) -> dict:
          f"{ {k: round(v, 4) for k, v in val_metrics.items()} }")
 
     # ── Predict on splits & save ───────────────────────────────────────
+    # CRITICAL: group_by_length reorders eval samples by length, so
+    # pred.predictions comes back in length-sorted order while ds_pred["id"]
+    # and ds_pred["labels"] are in original order -> p_text misaligned with
+    # id/label (AUC collapses to ~0.5 even though the model is fine). Disable
+    # it for prediction so the eval sampler is SequentialSampler (original
+    # order). Training still uses group_by_length=True (harmless there).
+    trainer.args.group_by_length = False
+
     def _predict_and_save(ds_pred, out_path: Path, name: str) -> dict:
         if len(ds_pred) == 0:
             step(f"  [{name}] empty -> skip")
@@ -356,11 +364,27 @@ def train_one(args: argparse.Namespace) -> dict:
             logits = logits.squeeze(-1)
         probs = 1.0 / (1.0 + np.exp(-logits))
 
+        labels_arr = np.asarray(ds_pred["labels"], dtype=np.int8)
         out_df = pd.DataFrame({
             "id":     list(ds_pred["id"]),
             "p_text": probs.astype(np.float32),
-            "label":  np.asarray(ds_pred["labels"], dtype=np.int8),
+            "label":  labels_arr,
         })
+
+        # Sanity guard against the group_by_length misalignment bug: a working
+        # model must give positives a higher mean p_text than negatives. If the
+        # gap is ~0, p_text is shuffled relative to labels -> fail loudly rather
+        # than silently writing a useless file.
+        if labels_arr.min() != labels_arr.max():   # both classes present
+            gap = probs[labels_arr == 1].mean() - probs[labels_arr == 0].mean()
+            step(f"  [{name}] sanity: mean p_text(pos)-(neg) = {gap:+.4f}")
+            if gap < 0.05:
+                raise RuntimeError(
+                    f"[{name}] p_text appears MISALIGNED with labels "
+                    f"(pos-neg gap={gap:+.4f}, expected >0.05). "
+                    f"Likely group_by_length reordered eval output. NOT saving."
+                )
+
         out_df.to_parquet(out_path, engine="pyarrow",
                           compression="snappy", index=False)
         step(f"  [{name}] saved {out_path.name} "
