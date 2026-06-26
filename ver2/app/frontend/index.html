@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DeDe Inference</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Stage 1 + Stage 2</p>
+            <h1>DeDe Inference</h1>
+          </div>
+          <div class="status" id="healthStatus">Checking backend</div>
+        </header>
+
+        <div class="layout">
+          <form class="panel input-panel" id="predictForm">
+            <div class="mode-row" role="tablist" aria-label="Input mode">
+              <button type="button" class="mode active" data-mode="url">URL</button>
+              <button type="button" class="mode" data-mode="manual">Manual text</button>
+            </div>
+
+            <label class="field url-only">
+              <span>Post URL</span>
+              <input id="url" type="url" placeholder="https://www.facebook.com/share/p/..." />
+            </label>
+
+            <div class="manual-only hidden">
+              <label class="field">
+                <span>Title or caption</span>
+                <input id="title" type="text" placeholder="Optional title" />
+              </label>
+              <label class="field">
+                <span>Body</span>
+                <textarea id="body" rows="8" placeholder="Paste the post text here"></textarea>
+              </label>
+            </div>
+
+            <div class="grid">
+              <label class="field">
+                <span>Reactions / upvotes</span>
+                <input id="upvotes" type="number" min="0" step="1" value="0" />
+              </label>
+              <label class="field">
+                <span>Comments</span>
+                <input id="numComments" type="number" min="0" step="1" value="0" />
+              </label>
+            </div>
+
+            <label class="field">
+              <span>Unix time</span>
+              <input id="createdUtc" type="number" min="0" placeholder="Defaults to now" />
+            </label>
+
+            <label class="toggle">
+              <input id="translate" type="checkbox" checked />
+              <span>Translate to English before inference</span>
+            </label>
+
+            <button class="primary" id="submitBtn" type="submit">Predict</button>
+            <p class="helper">
+              URL scraping is best-effort. If Facebook blocks extraction, paste the post manually.
+            </p>
+          </form>
+
+          <section class="panel result-panel" aria-live="polite">
+            <div class="result-empty" id="emptyState">
+              <p class="eyebrow">Result</p>
+              <h2>Submit a post to score depression-risk probability.</h2>
+            </div>
+
+            <div class="result hidden" id="resultState">
+              <div class="score-head">
+                <div>
+                  <p class="eyebrow">Final probability</p>
+                  <div class="score" id="finalScore">0.00%</div>
+                </div>
+                <span class="badge" id="labelBadge">label 0</span>
+              </div>
+
+              <div class="meter" aria-hidden="true">
+                <div class="meter-fill" id="meterFill"></div>
+              </div>
+
+              <dl class="metrics">
+                <div>
+                  <dt>Stage 1 p_text</dt>
+                  <dd id="stage1Score">0.0000</dd>
+                </div>
+                <div>
+                  <dt>Stage 2 p_final</dt>
+                  <dd id="stage2Score">0.0000</dd>
+                </div>
+              </dl>
+
+              <div class="cleaned">
+                <p class="eyebrow">Cleaned English text</p>
+                <h3 id="cleanTitle"></h3>
+                <p id="cleanBody"></p>
+              </div>
+
+              <p class="note" id="note"></p>
+            </div>
+
+            <div class="error hidden" id="errorState"></div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>

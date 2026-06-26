@@ -1,0 +1,16 @@
+fastapi
+uvicorn[standard]
+pydantic>=2
+requests
+beautifulsoup4
+deep-translator
+joblib
+numpy
+pandas
+pyarrow
+torch
+transformers
+peft
+safetensors
+lightgbm
+scikit-learn
