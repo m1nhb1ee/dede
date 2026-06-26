@@ -18,6 +18,7 @@ const labelBadge = document.querySelector("#labelBadge");
 const meterFill = document.querySelector("#meterFill");
 const cleanTitle = document.querySelector("#cleanTitle");
 const cleanBody = document.querySelector("#cleanBody");
+const crawlMeta = document.querySelector("#crawlMeta");
 const note = document.querySelector("#note");
 
 let mode = "url";
@@ -66,6 +67,8 @@ function showResult(data) {
   meterFill.style.width = `${Math.max(0, Math.min(100, pFinal * 100))}%`;
   cleanTitle.textContent = data.title_en_clean || "Untitled";
   cleanBody.textContent = data.body_en_clean || "";
+  const when = new Date(Number(data.created_utc) * 1000).toLocaleString();
+  crawlMeta.textContent = `reactions: ${data.upvotes} · comments: ${data.num_comments} · posted: ${when}`;
   note.textContent = data.note || "";
 
   emptyState.classList.add("hidden");
@@ -99,6 +102,10 @@ form.addEventListener("submit", async (event) => {
     showResult(data);
     await checkHealth();
   } catch (error) {
+    // Fallback: if scraping a URL failed, drop into Manual mode to paste text.
+    if (mode === "url") {
+      document.querySelector('.mode[data-mode="manual"]').click();
+    }
     showError(error.message || "Prediction failed");
   } finally {
     setLoading(false);

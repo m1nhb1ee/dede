@@ -1,14 +1,26 @@
 from __future__ import annotations
 
+import sys
 from pathlib import Path
+
+# Make this runnable from ANY cwd / launch form:
+#   uvicorn main:app                        (from this folder)
+#   uvicorn ver2.app.backend.main:app       (from the repo root)
+# - this folder on sys.path  -> sibling imports (inference_service, schemas)
+# - repo root on sys.path    -> the `ver2.*` model code inference_service pulls in
+_HERE = Path(__file__).resolve().parent
+_ROOT = Path(__file__).resolve().parents[3]
+for _p in (str(_ROOT), str(_HERE)):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from ver2.app.backend.inference_service import InferenceService
-from ver2.app.backend.schemas import HealthResponse, PredictRequest, PredictResponse
+from inference_service import InferenceService
+from schemas import HealthResponse, PredictRequest, PredictResponse
 
 
 APP_DIR = Path(__file__).resolve().parents[1]

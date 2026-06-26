@@ -25,6 +25,9 @@ class PredictResponse(BaseModel):
     predicted_label_at_0_5: int
     title_en_clean: str
     body_en_clean: str
+    upvotes: float
+    num_comments: float
+    created_utc: int
     source_url: str | None
     note: str
 

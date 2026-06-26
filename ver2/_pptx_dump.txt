@@ -1,0 +1,170 @@
+﻿slides: 27
+
+=== SLIDE 1: (no title) ===
+
+=== SLIDE 2: (no title) ===
+  picture[0]: 3174367x952975
+  text[1]: Depression diagnosis via social media posts
+  text[2]: ΓÇ╣#ΓÇ║
+  text[3]: - Team 13 -
+
+=== SLIDE 3: (no title) ===
+  text[0]: ΓÇ╣#ΓÇ║
+  text[1]: TEAM MEMBERS
+  text[2]: Nguyß╗àn Trß╗ìng Minh (20235976) | Nguyß╗àn L├¬ H╞░ng (20235942) | Nguyß╗àn Anh ─Éß╗⌐c (20235914) | Phß║ím Xu├ón Tuß║Ñn (20236010) | ─Éß╗ông ─Éß║íi Huy (20235945)
+
+=== SLIDE 4: DEFINITION & PURPOSE ===
+  text[0]: DEFINITION & PURPOSE
+  text[1]: ΓÇ╣#ΓÇ║
+  text[2]: Definition: A binary classification system that estimates whether a post is depression-related (label = 1) or non-depression-related (label = 0), using text content (title + body) and metadata (upvotes, comments, posting time). | Mechanism: A two-stage pipeline: Stage 1 uses MentalRoBERTa + LoRA to 
+
+=== SLIDE 5: Why not a single model? ===
+  text[0]: Why not a single model?
+  text[1]: ΓÇ╣#ΓÇ║
+  picture[2]: 4079350x4863525
+  text[3]: Text and metadata provide complementary signals | Modular design ΓÇö debug each stage independently | Enables ablation: text-only vs meta-only vs full ensemble |  |  | AI gen v trminh check lß║íi ─æ├║ng l├¡ do k nhe :(
+
+=== SLIDE 6: DATASET OVERVIEW ===
+  text[0]: DATASET OVERVIEW
+  text[1]: ΓÇ╣#ΓÇ║
+  picture[2]: 7534525x4468274
+  text[3]: 2,470,778 Reddit posts (Jan 2008 ΓÇô Dec 2022) | 8 columns: id, subreddit, title, body, upvotes, created_utc, num_comments, label | Task: binary classification (0 = normal, 1 = depression-related)
+
+=== SLIDE 7: DATA QUALITY ISSUES & PREPROCESSING
+ ===
+  text[0]: DATA QUALITY ISSUES & PREPROCESSING
+  text[1]: ΓÇ╣#ΓÇ║
+  text[2]: Missing & invalid text | 18.7% posts: body empty / [removed] / [deleted] | 4.6% missing num_comments | Title missing: negligible (0.0009%) | Duplicates & noise | Body duplicates (ΓëÑ40 chars): 0.35% (8,526 rows) | id duplicates: negligible (3 rows) | Extreme distributions | Body length highly skewed: 
+
+=== SLIDE 8: SUBREDDIT Γëê LABEL (DATA LEAKAGE) ===
+  text[0]: SUBREDDIT Γëê LABEL (DATA LEAKAGE)
+  text[1]: ΓÇ╣#ΓÇ║
+  picture[2]: 5482275x2972825
+  picture[3]: 5404476x2602150
+  text[4]: Including subreddit = including the answer. Our reported metrics are subreddit-blind.
+
+=== SLIDE 9: REAL TEXT SIGNALS EXIST BEYOND SUBREDDIT ===
+  text[0]: REAL TEXT SIGNALS EXIST BEYOND SUBREDDIT
+  text[1]: ΓÇ╣#ΓÇ║
+  picture[2]: 5288500x2782225
+  picture[3]: 4726075x2833351
+
+=== SLIDE 10: TEMPORAL DRIFT: WHY NOT RANDOM SPLIT? ===
+  text[0]: TEMPORAL DRIFT: WHY NOT RANDOM SPLIT?
+  text[1]: ΓÇ╣#ΓÇ║
+  picture[2]: 5147974x3137500
+  text[3]: Label rate swings wildly across years
+  picture[4]: 4967575x2863450
+  text[5]: Volume also shifts (peak 2019 = 27.1%) ΓÇö composition changes, not just volume
+
+=== SLIDE 11: TOKEN LENGTH ANALYSIS & CHOOSING MAX_LENGTH ===
+  text[0]: TOKEN LENGTH ANALYSIS & CHOOSING MAX_LENGTH
+  text[1]: ΓÇ╣#ΓÇ║
+  picture[2]: 6452801x3788000
+  text[3]: RoBERTa has a fixed input window ΓÇö we must choose how much text to feed the model without excessive truncation or wasted compute. | (tui k bt vt j c
+
+=== SLIDE 12: PREPROCESSING PIPELINE ===
+  text[0]: PREPROCESSING PIPELINE
+  text[1]: ΓÇ╣#ΓÇ║
+  picture[2]: 5133975x4248150
+  text[3]: Step 1 - Cleaning  | Drop null label/id, dedup body, flag removed bodies | Clip upvotes & comments at p99.5 | Replace [URL], [USER], [SUB] sentinel tokens | 2,470,778 ΓåÆ 2,470,017 rows (0.03% dropped) | Step 2 - Splitting | Primary: time-based (train Γëñ2020 / val 2021 / test 2022) | OOF: 3-fold strati
+
+=== SLIDE 13: STAGE 2 FEATURE SET (SUBREDDIT-BLIND) ===
+  text[0]: STAGE 2 FEATURE SET (SUBREDDIT-BLIND)
+  text[1]: ΓÇ╣#ΓÇ║
+  text[2]: ΓÇ£Stage 2 LightGBM gets 24 inputs. The rule is simple: every feature must be computable from one post alone. We removed subreddit because it's essentially the label. We removed year because it proxies which subreddits were active that year. We removed percentile-upvotes-within-subreddit because you n
+  text[3]: thoß║íi con AI gß╗úi ├╜ ─æ├óy m├á Tuß║Ñn k bt ─æ╞░a j v├áo, trminh cß╗⌐u nh├⌐ Ok
+
+=== SLIDE 14: Stage 1 ΓÇö MentalRoBERTa + LoRA ===
+  text[0]: Stage 1 ΓÇö MentalRoBERTa + LoRA
+  text[1]: ΓÇ╣#ΓÇ║
+  text[2]: Backbone: mental/mental-roberta-base (domain-specific for mental health; fallback to roberta-base) | LoRA Configurations: r=16, target modules: query + value ->  only ~0.47% trainable parameters (~590K) | Loss Function: BCE + pos_weight + label smoothing (0.05) | Imbalance Handling: 50% undersamplin
+  picture[3]: 5729025x3002400
+
+=== SLIDE 15: Custom Classification Head  ===
+  text[0]: Custom Classification Head
+  text[1]: ΓÇ╣#ΓÇ║
+  text[2]: 4-Step Architecture (from model.py): | Layer-weighted average (last 4 layers) | Dual pooling: CLS token + masked mean | Residual FFN block | Multi-Sample Dropout (K=5) | Quick Summary: Enhances generalization capabilities without full fine-tuning of the 110M parameters.
+
+=== SLIDE 16: Training Setup & OOF Stacking  ===
+  text[0]: Training Setup & OOF Stacking
+  text[1]: ΓÇ╣#ΓÇ║
+  text[2]: Hardware: Kaggle 2├ù T4 GPUs, max_length=512, effective batch size = 64 | Validation Strategy: 3-fold stratified OOF (Out-Of-Fold) on time-train -> prevents data leakage during Stage 2 stacking | Primary Metric: F1-macro | Evaluation: Subset of 60K (for early stopping) + full validation set of 605K (
+  picture[3]: 5890949x3051000
+
+=== SLIDE 17: Stage 2 ΓÇö LightGBM ===
+  text[0]: Stage 2 ΓÇö LightGBM
+  text[1]: ΓÇ╣#ΓÇ║
+  text[2]: Input: p_text (OOF predictions) + 23 meta-features | Comparison of 3 Variants: | Variant A: Text only p_text  | Variant B: Metadata only (excluding p_text ) | Variant C: Full Ensemble -> Primary results | Tuning: Optuna (50 trials), class_weight='balanced' | Note: Stage 2 code is not yet in the repo
+  picture[3]: 5833251x2469800
+  picture[4]: 5579700x2578475
+
+=== SLIDE 18: Stage 2 ΓÇö LightGBM ===
+  text[0]: Stage 2 ΓÇö LightGBM
+  text[1]: ΓÇ╣#ΓÇ║
+  picture[2]: 5162226x4952125
+  picture[3]: 5878376x3110749
+
+=== SLIDE 19: Stage 2 ΓÇö LightGBM ===
+  text[0]: Stage 2 ΓÇö LightGBM
+  text[1]: ΓÇ╣#ΓÇ║
+  picture[2]: 4797950x5407775
+
+=== SLIDE 20: Stage 2 ΓÇö LightGBM ===
+  text[0]: Stage 2 ΓÇö LightGBM
+  text[1]: ΓÇ╣#ΓÇ║
+  picture[2]: 6847475x2862774
+  picture[3]: 4553795x2693651
+
+=== SLIDE 21: Stage 1 Results (from Training Logs)  ===
+  text[0]: Stage 1 Results (from Training Logs)
+  text[1]: ΓÇ╣#ΓÇ║
+  text[2]: Fold 0, Validation Subset (60K), Best Checkpoint: | F1-macro ~ 0.94, F1-positive ~ 0.90 | PR-AUC ~ 0.97, ROC-AUC ~ 0.99 | Training Time: ~6.4 hours/fold on Kaggle 2├ù T4 | Key Takeaway: These metrics are on the validation fold, not the final 2022 test set. | (Optional) Add a learning curve chart (F1 
+  picture[3]: 5868800x5079800
+
+=== SLIDE 22: Stage 1 ΓÇö MentalRoBERTa + LoRA ===
+  text[0]: Stage 1 ΓÇö MentalRoBERTa + LoRA
+  text[1]: ΓÇ╣#ΓÇ║
+  picture[2]: 5298775x4810425
+  picture[3]: 6249701x2974255
+
+=== SLIDE 23: Stage 1 ΓÇö MentalRoBERTa + LoRA ===
+  text[0]: Stage 1 ΓÇö MentalRoBERTa + LoRA
+  text[1]: ΓÇ╣#ΓÇ║
+  picture[2]: 5858601x2449350
+  picture[3]: 5497892x3252101
+
+=== SLIDE 24: Expected Evaluation / Ablation Study  ===
+  text[0]: Expected Evaluation / Ablation Study
+  text[1]: ΓÇ╣#ΓÇ║
+  text[2]: Comparison Table: | Time-based vs. Random Split -> Proves data drift | Variant A / B / C performance | Cross-Subreddit Holdout: Train on 3 subreddits -> Test on 2 unseen subreddits (measures true semantic understanding) | Secondary Metrics: PR-AUC, Recall@Precision=0.9, Confusion Matrix | Feature Im
+  picture[3]: 5808025x4255251
+
+=== SLIDE 25: Summary & Future Work ===
+  text[0]: Summary & Future Work
+  text[1]: ΓÇ╣#ΓÇ║
+  picture[2]: 3492549x3867150
+  picture[3]: 3492549x3867150
+  picture[4]: 3492549x3867150
+  text[5]: Completed
+  text[6]: Completed in-depth data analysis (EDA), built a rigorous preprocessing pipeline, and successfully trained the Stage 1 model (MentalRoBERTa + LoRA).
+  text[7]: Next Step
+  text[8]: Synthesize Out-of-Fold (Assemble OOF), conduct training of the LightGBM Stage 2 model, and perform comprehensive evaluation on the Test 2022 dataset.
+  text[9]: Open Orientation
+  text[10]: In the future, it is possible to deploy Platt Scaling to calibrate probabilities, study cross-lingual models, and better balance data sets.
+  picture[11]: 533400x533400
+  picture[12]: 533400x533400
+  picture[13]: 533400x533400
+
+=== SLIDE 26: Demo: How one post becomes a prediction
+ ===
+  text[0]: Demo: How one post becomes a prediction
+  text[1]: ΓÇ╣#ΓÇ║
+  picture[2]: 4957350x3630125
+  picture[3]: 2559275x5057800
+  picture[4]: 2559275x1069719
+
+=== SLIDE 27: (no title) ===
+  text[0]: THANK YOU !
+  text[1]: ΓÇ╣#ΓÇ║
+

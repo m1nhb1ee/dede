@@ -1,0 +1,401 @@
+diff --git a/ver2/stage2/src/config.py b/ver2/stage2/src/config.py
+index 0c9d395..5c0514c 100644
+--- a/ver2/stage2/src/config.py
++++ b/ver2/stage2/src/config.py
+@@ -38,8 +38,15 @@ PRED_DIR   = OUT_DIR / "predictions"
+ for d in (OUT_DIR, MODELS_DIR, PRED_DIR):
+     d.mkdir(parents=True, exist_ok=True)
+ 
+-BEST_PARAMS_PATH = OUT_DIR / "best_params.json"
+-MODEL_PATH       = MODELS_DIR / "stage2_lgbm.pkl"
++BEST_PARAMS_PATH = OUT_DIR / "best_params.json"             # pre-tuned params (used as-is; we don't re-run tuning)
++MODEL_PATH       = MODELS_DIR / "stage2_lgbm.pkl"            # legacy baseline (class_weight=balanced, f1-tuned)
++MODEL_RAW_PATH   = MODELS_DIR / "stage2_lgbm_raw.pkl"        # new: no class_weight, uncalibrated
++MODEL_CALIBRATED_PATH = MODELS_DIR / "stage2_lgbm_calibrated.pkl"  # new + isotonic calibration (canonical going forward)
++
++# Post-hoc calibration: fraction of TRAIN held out (disjoint from the fit set)
++# to fit the isotonic map. "isotonic" is flexible and safe given the large train.
++CALIB_HOLDOUT = 0.10
++CALIB_METHOD  = "isotonic"
+ 
+ # ── Columns ──────────────────────────────────────────────────────────────────
+ ID_COL    = "id"
+@@ -78,11 +85,13 @@ FEATURE_COLS = BASE_FEATURE_COLS + ENGINEERED_COLS
+ # are left numeric -- LightGBM splits handle them natively. No categorical list.
+ 
+ # ── CV / tuning ──────────────────────────────────────────────────────────────
++# Kept for the optional tune.py; the standard pipeline does NOT re-tune and just
++# reuses best_params.json (pre-tuned) via train_final.py.
+ N_FOLDS    = 3          # reuse the 3-fold OOF assignment from splits.parquet
+ SEED       = 42
+-N_TRIALS   = 50         # Optuna trials (tech_plan 6.4)
++N_TRIALS   = 50         # Optuna trials (only if tune.py is run manually)
+ 
+-# ── LightGBM baseline (tech_plan 6.3) ────────────────────────────────────────
++# ── LightGBM baseline ────────────────────────────────────────────────────────
+ LGBM_BASE = {
+     "objective":         "binary",
+     "metric":            ["binary_logloss", "auc"],
+@@ -97,7 +106,9 @@ LGBM_BASE = {
+     "subsample":         0.8,
+     "subsample_freq":    1,         # subsample only takes effect with freq>0
+     "colsample_bytree":  0.8,
+-    "class_weight":      "balanced",
++    # No class_weight: training on the natural 19.4% base rate keeps predicted
++    # probabilities calibrated. "balanced" inflates them (optimizes label@threshold,
++    # not probability accuracy). Isotonic calibration handles any residual skew.
+     "random_state":      SEED,
+     "n_jobs":            -1,
+     "verbose":           -1,
+diff --git a/ver2/stage2/src/predict.py b/ver2/stage2/src/predict.py
+index 33d79dc..422e358 100644
+--- a/ver2/stage2/src/predict.py
++++ b/ver2/stage2/src/predict.py
+@@ -1,66 +1,120 @@
+-"""Stage 2 final prediction: score val + test with the trained LightGBM.
++"""Stage 2 prediction + calibration report.
+ 
+-    python predict.py            # writes p_final_test.parquet (+ val if available)
++Scores val + test with the calibrated LightGBM (canonical) and writes
++p_final_{split}.parquet. For labelled splits it prints a comparison table of
++baseline / raw / calibrated using proper scoring rules (log loss, Brier, ECE)
++so you can see calibration improve, and saves a reliability-curve plot.
+ 
+-For splits that carry labels, prints accuracy / f1_macro / f1_pos / AUC so you
+-can sanity-check the meta-model against Stage 1's p_text alone.
++    python predict.py
+ """
+ 
+ from __future__ import annotations
+ 
+ import joblib
++import matplotlib.pyplot as plt
+ import numpy as np
+ import pandas as pd
++from sklearn.calibration import calibration_curve
+ from sklearn.metrics import (
+-    accuracy_score, f1_score, precision_score, recall_score, roc_auc_score,
++    brier_score_loss, f1_score, log_loss, roc_auc_score,
+ )
+ 
+ try:
+-    from ver2.stage2.src.config import ID_COL, LABEL_COL, MODEL_PATH, PRED_DIR
++    from ver2.stage2.src.config import (
++        ID_COL, LABEL_COL, MODEL_CALIBRATED_PATH, MODEL_PATH, MODEL_RAW_PATH,
++        OUT_DIR, PRED_DIR,
++    )
+     from ver2.stage2.src.data import build_dataset, get_xy, split_frame
+ except ImportError:  # flat layout
+-    from config import ID_COL, LABEL_COL, MODEL_PATH, PRED_DIR
++    from config import (
++        ID_COL, LABEL_COL, MODEL_CALIBRATED_PATH, MODEL_PATH, MODEL_RAW_PATH,
++        OUT_DIR, PRED_DIR,
++    )
+     from data import build_dataset, get_xy, split_frame
+ 
+ 
++def expected_calibration_error(y, prob, n_bins: int = 10) -> float:
++    """Mean |accuracy - confidence| over equal-width probability bins."""
++    bins = np.linspace(0.0, 1.0, n_bins + 1)
++    idx = np.clip(np.digitize(prob, bins) - 1, 0, n_bins - 1)
++    ece = 0.0
++    for b in range(n_bins):
++        mask = idx == b
++        if mask.any():
++            ece += abs(y[mask].mean() - prob[mask].mean()) * mask.mean()
++    return float(ece)
++
++
+ def _report(name: str, y, prob) -> dict:
+     pred = (prob >= 0.5).astype(int)
+     m = {
+-        "n":         int(len(y)),
+-        "accuracy":  float(accuracy_score(y, pred)),
+-        "f1_macro":  float(f1_score(y, pred, average="macro")),
+-        "f1_pos":    float(f1_score(y, pred, pos_label=1, zero_division=0)),
+-        "precision": float(precision_score(y, pred, zero_division=0)),
+-        "recall":    float(recall_score(y, pred, zero_division=0)),
+-        "roc_auc":   float(roc_auc_score(y, prob)) if y.min() != y.max() else 0.0,
++        "logloss": float(log_loss(y, prob, labels=[0, 1])),
++        "brier":   float(brier_score_loss(y, prob)),
++        "ece":     expected_calibration_error(y.to_numpy(), prob),
++        "roc_auc": float(roc_auc_score(y, prob)) if y.min() != y.max() else 0.0,
++        "f1_macro": float(f1_score(y, pred, average="macro")),
++        "mean_p":  float(prob.mean()),
+     }
+-    print(f"  [{name}] " + "  ".join(f"{k}={v:.4f}" if isinstance(v, float) else f"{k}={v}"
+-                                     for k, v in m.items()))
++    print(f"  [{name:>10}] " + "  ".join(f"{k}={v:.4f}" for k, v in m.items()))
+     return m
+ 
+ 
+-def predict_split(model, df, split: str):
+-    part = split_frame(df, split)
+-    if len(part) == 0:
+-        print(f"  [{split}] empty -> skip")
+-        return
+-    X, y = get_xy(part)
+-    prob = model.predict_proba(X)[:, 1].astype(np.float32)
+-    out = pd.DataFrame({ID_COL: part[ID_COL].values, "p_final": prob,
+-                        LABEL_COL: y.values})
+-    out_path = PRED_DIR / f"p_final_{split}.parquet"
+-    out.to_parquet(out_path, engine="pyarrow", compression="snappy", index=False)
+-    _report(split, y, prob)
+-    print(f"  [{split}] wrote {out_path}  ({len(out):,} rows)")
++def _load_models() -> dict:
++    specs = [("baseline", MODEL_PATH), ("raw", MODEL_RAW_PATH),
++             ("calibrated", MODEL_CALIBRATED_PATH)]
++    models = {}
++    for name, path in specs:
++        if path.exists():
++            models[name] = joblib.load(path)
++        else:
++            print(f"  [skip] {name}: {path.name} not found")
++    return models
++
++
++def _reliability_plot(curves: dict, base_rate: float, split: str) -> None:
++    fig, ax = plt.subplots(figsize=(6, 6))
++    ax.plot([0, 1], [0, 1], "--", color="gray", label="perfect")
++    for name, (frac_pos, mean_pred) in curves.items():
++        ax.plot(mean_pred, frac_pos, marker="o", label=name)
++    ax.axhline(base_rate, color="red", lw=0.8, alpha=0.4)
++    ax.set_xlabel("mean predicted probability")
++    ax.set_ylabel("observed fraction positive")
++    ax.set_title(f"Stage 2 reliability ({split})")
++    ax.legend()
++    fig.tight_layout()
++    out = OUT_DIR / f"reliability_{split}.png"
++    fig.savefig(out, dpi=130)
++    print(f"  saved reliability plot -> {out}")
+ 
+ 
+ def main() -> None:
+-    if not MODEL_PATH.exists():
+-        raise SystemExit(f"Model not found: {MODEL_PATH}. Run train_final.py first.")
+-    model = joblib.load(MODEL_PATH)
++    models = _load_models()
++    if "calibrated" not in models:
++        raise SystemExit(f"Calibrated model not found: {MODEL_CALIBRATED_PATH}. Run train_final.py.")
+     df = build_dataset()
++
+     for split in ("val", "test"):
+-        predict_split(model, df, split)
++        part = split_frame(df, split)
++        if len(part) == 0:
++            print(f"[{split}] empty -> skip")
++            continue
++        X, y = get_xy(part)
++        print(f"[{split}] {len(part):,} rows  base_rate={y.mean():.4f}")
++
++        curves = {}
++        for name, model in models.items():
++            prob = model.predict_proba(X)[:, 1].astype(np.float32)
++            _report(name, y, prob)
++            curves[name] = calibration_curve(y, prob, n_bins=10, strategy="quantile")
++
++        # Canonical output = calibrated probabilities.
++        prob = models["calibrated"].predict_proba(X)[:, 1].astype(np.float32)
++        out = pd.DataFrame({ID_COL: part[ID_COL].values, "p_final": prob,
++                            LABEL_COL: y.values})
++        out_path = PRED_DIR / f"p_final_{split}.parquet"
++        out.to_parquet(out_path, engine="pyarrow", compression="snappy", index=False)
++        print(f"  wrote {out_path}")
++        _reliability_plot(curves, float(y.mean()), split)
+ 
+ 
+ if __name__ == "__main__":
+diff --git a/ver2/stage2/src/train_final.py b/ver2/stage2/src/train_final.py
+index e3fcab4..8cbe190 100644
+--- a/ver2/stage2/src/train_final.py
++++ b/ver2/stage2/src/train_final.py
+@@ -1,10 +1,17 @@
+-"""Stage 2 final training: fit LightGBM on full TRAIN with best params.
++"""Stage 2 final training: fit LightGBM on full TRAIN, then fit an isotonic
++calibration map on a disjoint holdout. No re-tuning -- params come from the
++pre-tuned best_params.json (class_weight stripped) if present, else LGBM_BASE.
+ 
+-Early stopping uses a small stratified holdout carved from train (so it does
+-not depend on the full-model val p_text being ready). Saves the model plus a
+-feature-importance table + plot.
++Three artifacts are produced (the legacy `stage2_lgbm.pkl` baseline is left
++untouched so it can be compared against):
++    stage2_lgbm_raw.pkl         uncalibrated LightGBM (no class_weight)
++    stage2_lgbm_calibrated.pkl  raw model wrapped in isotonic calibration  <- canonical
+ 
+-    python train_final.py            # uses best_params.json if present, else baseline
++Holdouts carved from TRAIN (stratified, disjoint):
++    calib  (CALIB_HOLDOUT)  -> fit the isotonic map (model never trained on it)
++    early  (5%)             -> LightGBM early stopping
++
++    python train_final.py
+ """
+ 
+ from __future__ import annotations
+@@ -15,29 +22,35 @@ import joblib
+ import lightgbm as lgb
+ import matplotlib.pyplot as plt
+ import pandas as pd
++from sklearn.calibration import CalibratedClassifierCV
++from sklearn.metrics import brier_score_loss, log_loss
+ from sklearn.model_selection import train_test_split
+ 
+ try:
+     from ver2.stage2.src.config import (
+-        BEST_PARAMS_PATH, EARLY_STOPPING_ROUNDS, FEATURE_COLS, LGBM_BASE,
+-        MODEL_PATH, OUT_DIR, SEED,
++        BEST_PARAMS_PATH, CALIB_HOLDOUT, CALIB_METHOD, EARLY_STOPPING_ROUNDS,
++        FEATURE_COLS, LGBM_BASE, MODEL_CALIBRATED_PATH, MODEL_RAW_PATH, OUT_DIR, SEED,
+     )
+     from ver2.stage2.src.data import build_dataset, get_xy, split_frame
+ except ImportError:  # flat layout
+     from config import (
+-        BEST_PARAMS_PATH, EARLY_STOPPING_ROUNDS, FEATURE_COLS, LGBM_BASE,
+-        MODEL_PATH, OUT_DIR, SEED,
++        BEST_PARAMS_PATH, CALIB_HOLDOUT, CALIB_METHOD, EARLY_STOPPING_ROUNDS,
++        FEATURE_COLS, LGBM_BASE, MODEL_CALIBRATED_PATH, MODEL_RAW_PATH, OUT_DIR, SEED,
+     )
+     from data import build_dataset, get_xy, split_frame
+ 
+ 
+ def load_params() -> dict:
++    """Use pre-tuned params if available, else the baseline. Either way strip
++    class_weight so probabilities stay calibrated (we do not re-tune)."""
+     if BEST_PARAMS_PATH.exists():
+         params = json.loads(BEST_PARAMS_PATH.read_text(encoding="utf-8"))
+-        print(f"Using tuned params from {BEST_PARAMS_PATH.name}")
+-        return params
+-    print("No best_params.json -> using baseline LGBM_BASE")
+-    return dict(LGBM_BASE)
++        params.pop("class_weight", None)
++        print(f"Using pre-tuned params from {BEST_PARAMS_PATH.name} (class_weight stripped)")
++    else:
++        params = dict(LGBM_BASE)
++        print("No best_params.json -> using LGBM_BASE")
++    return params
+ 
+ 
+ def main() -> None:
+@@ -45,11 +58,14 @@ def main() -> None:
+     train_df = split_frame(df, "train")
+     X, y = get_xy(train_df)
+ 
+-    # Stratified holdout just for early stopping.
++    # Disjoint holdouts: calibration set (unseen by the model) + early-stop set.
++    Xfit, Xcal, yfit, ycal = train_test_split(
++        X, y, test_size=CALIB_HOLDOUT, stratify=y, random_state=SEED,
++    )
+     Xtr, Xes, ytr, yes = train_test_split(
+-        X, y, test_size=0.05, stratify=y, random_state=SEED,
++        Xfit, yfit, test_size=0.05, stratify=yfit, random_state=SEED,
+     )
+-    print(f"Fit on {len(Xtr):,} rows, early-stop on {len(Xes):,} holdout")
++    print(f"Fit {len(Xtr):,} | early-stop {len(Xes):,} | calibrate {len(Xcal):,}")
+ 
+     model = lgb.LGBMClassifier(**load_params())
+     model.fit(
+@@ -59,11 +75,23 @@ def main() -> None:
+                    lgb.log_evaluation(100)],
+     )
+     print(f"Best iteration: {model.best_iteration_}")
+-
+-    joblib.dump(model, MODEL_PATH)
+-    print(f"Saved model -> {MODEL_PATH}")
+-
+-    # Feature importance (gain).
++    joblib.dump(model, MODEL_RAW_PATH)
++    print(f"Saved raw model -> {MODEL_RAW_PATH}")
++
++    # Isotonic calibration on the held-out set the model never saw (cv='prefit').
++    calibrated = CalibratedClassifierCV(model, method=CALIB_METHOD, cv="prefit")
++    calibrated.fit(Xcal, ycal)
++    joblib.dump(calibrated, MODEL_CALIBRATED_PATH)
++    print(f"Saved calibrated model -> {MODEL_CALIBRATED_PATH}")
++
++    # Quick calibration sanity check on the calib holdout.
++    for name, m in [("raw", model), ("calibrated", calibrated)]:
++        p = m.predict_proba(Xcal)[:, 1]
++        print(f"  [{name:>10}] logloss={log_loss(ycal, p, labels=[0, 1]):.5f}  "
++              f"brier={brier_score_loss(ycal, p):.5f}  mean_p={p.mean():.4f} "
++              f"(base_rate={ycal.mean():.4f})")
++
++    # Feature importance (gain) from the raw booster.
+     imp = (pd.DataFrame({"feature": FEATURE_COLS,
+                          "gain": model.booster_.feature_importance("gain")})
+            .sort_values("gain", ascending=False).reset_index(drop=True))
+diff --git a/ver2/stage2/src/tune.py b/ver2/stage2/src/tune.py
+index d8bc051..7265829 100644
+--- a/ver2/stage2/src/tune.py
++++ b/ver2/stage2/src/tune.py
+@@ -1,7 +1,12 @@
+ """Stage 2 hyperparameter tuning: Optuna + 3-fold CV on TRAIN.
+ 
++OPTIONAL / manual only -- the standard pipeline does not re-tune. Run this by
++hand if you want to refresh best_params.json.
++
+ Reuses the fold assignment from splits.parquet (same 3 folds as Stage 1 OOF)
+-so CV is consistent across stages. Objective = mean f1_macro @ 0.5 over folds.
++so CV is consistent across stages. Objective = mean log loss over folds
++(minimize) -- a proper scoring rule that rewards accurate probabilities, not
++label accuracy at a threshold.
+ 
+     python tune.py                 # 50 trials (config.N_TRIALS)
+     python tune.py --n_trials 20   # quick
+@@ -15,7 +20,7 @@ import json
+ import lightgbm as lgb
+ import numpy as np
+ import optuna
+-from sklearn.metrics import f1_score
++from sklearn.metrics import log_loss
+ 
+ try:
+     from ver2.stage2.src.config import (
+@@ -29,8 +34,8 @@ except ImportError:  # flat layout
+     from data import build_dataset, get_xy, split_frame
+ 
+ 
+-def _cv_f1(params: dict, train_df) -> float:
+-    """Mean f1_macro across the N_FOLDS held-out folds."""
++def _cv_logloss(params: dict, train_df) -> float:
++    """Mean log loss across the N_FOLDS held-out folds (lower is better)."""
+     scores = []
+     for k in range(N_FOLDS):
+         tr = train_df[train_df["fold"] != k]
+@@ -43,8 +48,8 @@ def _cv_f1(params: dict, train_df) -> float:
+             eval_set=[(Xva, yva)], eval_metric="binary_logloss",
+             callbacks=[lgb.early_stopping(EARLY_STOPPING_ROUNDS, verbose=False)],
+         )
+-        pred = (model.predict_proba(Xva)[:, 1] >= 0.5).astype(int)
+-        scores.append(f1_score(yva, pred, average="macro"))
++        prob = model.predict_proba(Xva)[:, 1]
++        scores.append(log_loss(yva, prob, labels=[0, 1]))
+     return float(np.mean(scores))
+ 
+ 
+@@ -60,7 +65,7 @@ def make_objective(train_df):
+             "colsample_bytree":  trial.suggest_categorical("colsample_bytree", [0.6, 0.8, 1.0]),
+             "subsample":         trial.suggest_categorical("subsample", [0.6, 0.8, 1.0]),
+         })
+-        return _cv_f1(params, train_df)
++        return _cv_logloss(params, train_df)
+     return objective
+ 
+ 
+@@ -75,7 +80,7 @@ def main() -> None:
+           f"{args.n_trials} trials")
+ 
+     study = optuna.create_study(
+-        direction="maximize",
++        direction="minimize",
+         sampler=optuna.samplers.TPESampler(seed=SEED),
+         pruner=optuna.pruners.MedianPruner(),
+     )
+@@ -94,7 +99,7 @@ def main() -> None:
+     best = dict(LGBM_BASE)
+     best.update(study.best_params)
+     BEST_PARAMS_PATH.write_text(json.dumps(best, indent=2), encoding="utf-8")
+-    print(f"\nBest f1_macro (CV): {study.best_value:.4f}")
++    print(f"\nBest log loss (CV): {study.best_value:.5f}")
+     print(f"Best params -> {BEST_PARAMS_PATH}")
+ 
+ 

@@ -1,0 +1,61 @@
+﻿ 1. [0 pics] (slide 1)
+ 2. [1 pics] (slide 2)
+ 3. [0 pics] (slide 3)
+ 4. [0 pics] DEFINITION & PURPOSE
+     DEFINITION & PURPOSE
+     ΓÇ╣#ΓÇ║
+     Definition: Binary classification ΓÇö depression-related (1) vs normal (0) from title+body + metadata.
+
+Mechanism: Stage 1
+ 5. [1 pics] Why not a single model?
+ 6. [1 pics] DATASET OVERVIEW
+ 7. [1 pics] DATA QUALITY ISSUES & PREPROCESSING
+ 8. [2 pics] SUBREDDIT Γëê LABEL (DATA LEAKAGE)
+ 9. [2 pics] REAL TEXT SIGNALS EXIST BEYOND SUBREDDIT
+10. [2 pics] TEMPORAL DRIFT: WHY NOT RANDOM SPLIT?
+11. [1 pics] TOKEN LENGTH ANALYSIS & CHOOSING MAX_LENGTH
+12. [1 pics] PREPROCESSING PIPELINE
+13. [0 pics] Stage 1 ΓÇö MentalRoBERTa + LoRA
+     Stage 1 ΓÇö MentalRoBERTa + LoRA
+     ΓÇ╣#ΓÇ║
+     Backbone: mental/mental-roberta-base (domain-specific for mental health; fallback to roberta-base)
+LoRA Configurations: 
+14. [0 pics] Custom Classification Head
+15. [1 pics] Training Setup & OOF Stacking
+16. [1 pics] Stage 1 Results ΓÇö Per-fold OOF & TEST
+     Stage 1 Results ΓÇö Per-fold OOF & TEST
+     ΓÇ╣#ΓÇ║
+     Per-fold @best-f1 (verified predictions):
+F0 OOF thr=0.69 f1=0.943 R_pos=0.910 | F0 TEST thr=0.62 f1=0.945 R_pos=0.925
+F
+17. [2 pics] Stage 1 ΓÇö TEST 2022 Ensemble Metrics
+18. [2 pics] Stage 1 ΓÇö Calibration & Score Distribution
+19. [1 pics] STAGE 2 FEATURE SET (SUBREDDIT-BLIND)
+     STAGE 2 FEATURE SET (SUBREDDIT-BLIND)
+     ΓÇ╣#ΓÇ║
+     Stage 2 LightGBM: 39 inputs = p_text + 38 metadata (29 raw + 9 engineered).
+Rule: computable from one post alone ΓÇö no su
+20. [1 pics] Stage 2 ΓÇö Model & Tuning
+     Stage 2 ΓÇö Model & Tuning
+     ΓÇ╣#ΓÇ║
+     Input: p_text (OOF) + 38 metadata (29 raw + 9 engineered) = 39 features
+Ablation: A=text only | B=meta only | C=full ens
+21. [2 pics] Stage 2 ΓÇö Calibration & Confusion (TEST 2022)
+     Stage 2 ΓÇö Calibration & Confusion (TEST 2022)
+     ΓÇ╣#ΓÇ║
+     Calibration: baseline over-confident (mean_pΓëê0.29 vs base 0.26). Surveyed Platt/isotonic; kept baseline to prioritize po
+22. [1 pics] Stage 2 ΓÇö Feature Importance
+23. [2 pics] Stage 2 ΓÇö ROC / PR & p_final Distribution
+24. [1 pics] Ablation Study A/B/C
+25. [6 pics] Summary & Future Work
+     Summary & Future Work
+     ΓÇ╣#ΓÇ║
+     Completed
+26. [1 pics] Demo ΓÇö Live Inference App
+     Demo ΓÇö Live Inference App
+     ΓÇ╣#ΓÇ║
+     Live inference app (ver2/app) ΓÇö FastAPI + web UI
+ΓÇó Scrape Reddit/Facebook/Threads URL or paste text + engagement metadat
+27. [0 pics] (slide 27)
+
+Issues: none

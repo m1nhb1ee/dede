@@ -19,7 +19,7 @@ from sklearn.metrics import (
     roc_auc_score, average_precision_score, accuracy_score,
 )
 
-PRED_DIR = Path("ver2/stage1/outputs/predictions")
+PRED_DIR = Path(__file__).resolve().parent / "outputs" / "predictions"
 FOLDS = [0, 1, 2]
 
 

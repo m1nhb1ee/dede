@@ -22,7 +22,7 @@ import pandas as pd
 import torch
 
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]  # .../DeDe (repo root)
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
@@ -47,6 +47,29 @@ DEFAULT_STAGE1_CKPT = ROOT / "ver2" / "stage1" / "outputs" / "checkpoints" / "fu
 DEFAULT_MODEL_DIR = ROOT / "models" / "mental-roberta-base"
 
 _WORD_RE = re.compile(r"[a-zA-Z']+")
+
+# Stage 2 was trained on Reddit. Its meta-features are Reddit-specific, so on
+# other platforms (Facebook, ...) they are out-of-distribution and inflate
+# p_final. We neutralize the offending ones to the Reddit train median:
+#  - title: FB has none -> title_len_chars=0 / body_to_title_ratio explodes.
+#  - engagement: FB "reactions" != Reddit "upvotes"; a high reaction count maps
+#    to a high upvotes_log that the model reads as a depression signal.
+# Real scraped reactions/comments are still shown in the UI; only the model
+# features are neutralized. (Train medians, see ver2/stage2 data.)
+_NEUTRAL_TITLE_LEN = 38.0
+_NEUTRAL_BODY_TO_TITLE_RATIO = 2.96
+_NEUTRAL_UPVOTES_LOG = 2.08
+_NEUTRAL_NUM_COMMENTS_LOG = 1.95
+_NEUTRAL_COMMENTS_PER_UPVOTE = 0.64
+
+
+def _is_social_source(url: str | None) -> bool:
+    """True when the post came from a non-Reddit social host whose engagement
+    semantics differ from Reddit's (so we should not feed them to Stage 2)."""
+    if not url:
+        return False
+    u = url.lower()
+    return any(h in u for h in _AUTHOR_TITLE_HOSTS)
 _RE_MARKDOWN_LINK = re.compile(r"\[([^\]]+)\]\(\s*https?://[^\)]+\)")
 _RE_REF_LINK = re.compile(r"\[([^\]]+)\]\[\d+\]")
 _RE_URL = re.compile(r"https?://\S+|www\.\S+")
@@ -72,6 +95,18 @@ class PostInput:
     num_comments: float
     created_utc: int
     source_url: str | None = None
+
+
+@dataclass
+class ScrapedPost:
+    """Result of scraping a URL. Engagement fields are None when the platform
+    does not expose them (only Facebook is parsed for now)."""
+
+    title: str
+    body: str
+    upvotes: float | None = None
+    num_comments: float | None = None
+    created_utc: int | None = None
 
 
 class InferenceService:
@@ -125,6 +160,9 @@ class InferenceService:
             "predicted_label_at_0_5": int(p_final >= 0.5),
             "title_en_clean": post.title,
             "body_en_clean": post.body,
+            "upvotes": post.upvotes,
+            "num_comments": post.num_comments,
+            "created_utc": post.created_utc,
             "source_url": post.source_url,
             "note": "Model risk score only; not a medical diagnosis.",
         }
@@ -141,9 +179,17 @@ class InferenceService:
         translate: bool,
     ) -> PostInput:
         if url:
-            title, body = scrape_url(url)
+            scraped = scrape_url(url)
+            title, body = scraped.title, scraped.body
             if not (title or body):
                 raise ValueError("Could not extract text from URL. Paste the post text manually.")
+            # Crawled engagement/time override the form defaults when available.
+            if scraped.upvotes is not None:
+                upvotes = scraped.upvotes
+            if scraped.num_comments is not None:
+                num_comments = scraped.num_comments
+            if scraped.created_utc is not None:
+                created_utc = scraped.created_utc
             source_url = url
         else:
             source_url = None
@@ -218,6 +264,25 @@ class InferenceService:
         word_set = set(words)
         title_len = len(title)
         body_len = len(body)
+        # No-title posts are OOD for the Reddit-trained meta-model -> neutralize.
+        if title:
+            title_len_feat = float(title_len)
+            body_to_title = body_len / (title_len + 1)
+        else:
+            title_len_feat = _NEUTRAL_TITLE_LEN
+            body_to_title = _NEUTRAL_BODY_TO_TITLE_RATIO
+
+        # Social-platform engagement (FB reactions) != Reddit upvotes -> neutralize
+        # the engagement features so they don't distort p_final. UI still shows
+        # the real scraped counts (post.upvotes / post.num_comments unchanged).
+        if _is_social_source(post.source_url):
+            upvotes_log = _NEUTRAL_UPVOTES_LOG
+            num_comments_log = _NEUTRAL_NUM_COMMENTS_LOG
+            comments_per_upvote = _NEUTRAL_COMMENTS_PER_UPVOTE
+        else:
+            upvotes_log = float(np.log1p(post.upvotes))
+            num_comments_log = float(np.log1p(post.num_comments))
+            comments_per_upvote = post.num_comments / (post.upvotes + 1.0)
 
         bins = [-1, 0, 50, 200, 500, 1000, 2000, 5000, 10_000_000]
         body_bucket = int(pd.cut(pd.Series([body_len]), bins=bins, labels=False).iloc[0])
@@ -233,11 +298,11 @@ class InferenceService:
             "p_text": p_text,
             "body_len_chars": body_len,
             "body_length_bucket": body_bucket,
-            "title_len_chars": title_len,
-            "body_to_title_ratio": body_len / (title_len + 1),
-            "upvotes_log": np.log1p(post.upvotes),
-            "num_comments_log": np.log1p(post.num_comments),
-            "comments_per_upvote": post.num_comments / (post.upvotes + 1.0),
+            "title_len_chars": title_len_feat,
+            "body_to_title_ratio": body_to_title,
+            "upvotes_log": upvotes_log,
+            "num_comments_log": num_comments_log,
+            "comments_per_upvote": comments_per_upvote,
             "has_mh_keyword": any(k in combined.lower() for k in MH_KEYWORDS),
             "num_first_person": sum(1 for w in words if w in FIRST_PERSON_WORDS),
             "num_negative_words": sum(1 for w in words if w in NEGATIVE_WORDS),
@@ -315,41 +380,175 @@ def load_state_dict(path: Path):
     return torch.load(str(path), map_location="cpu")
 
 
-def scrape_url(url: str) -> tuple[str, str]:
+# Desktop browsers get blocked (HTTP 400 / login wall) on Facebook share links,
+# but the public Open-Graph crawlers still receive the post preview. Try a real
+# browser first (best for news/blogs/Reddit), then fall back to crawler UAs.
+_BROWSER_UA = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125 Safari/537.36"
+)
+# Googlebot first: it returns the full rendered page (og:meta AND the inline
+# engagement JSON). facebookexternalhit only yields the lightweight og preview.
+_CRAWLER_UAS = (
+    "Googlebot/2.1 (+http://www.google.com/bot.html)",
+    "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)",
+)
+# Platforms where og:title is the author/handle, not a post title. The post text
+# lives in og:description, so we drop the "title" to avoid feeding a person's
+# name to a model trained on Reddit title+body.
+_AUTHOR_TITLE_HOSTS = (
+    "facebook.com", "instagram.com", "twitter.com", "x.com",
+    "threads.net", "threads.com", "tiktok.com",
+)
+
+_FALLBACK_MSG = (
+    "Could not read this link automatically (it may require login or block bots). "
+    "Switch to Manual entry and paste the post text."
+)
+
+# Facebook embeds the post's engagement in inline JSON (the first match is the
+# post itself; later matches belong to comments). Reactions map to "upvotes".
+_RE_FB_REACTIONS = re.compile(r'"reaction_count":\{"count":(\d+)')
+_RE_FB_COMMENTS = re.compile(r'"comment_rendering_instance":\{"comments":\{"total_count":(\d+)')
+_RE_FB_TIME = re.compile(r'"creation_time":(\d+)')
+
+
+def _extract_fb_engagement(page: str) -> tuple[float | None, float | None, int | None]:
+    def first(rx: re.Pattern) -> int | None:
+        m = rx.search(page)
+        return int(m.group(1)) if m else None
+
+    return first(_RE_FB_REACTIONS), first(_RE_FB_COMMENTS), first(_RE_FB_TIME)
+
+
+# Reddit: the modern site (www.reddit.com) serves a bot "verification" wall, but
+# old.reddit.com returns clean HTML (og:title = post title, og:description = body)
+# plus parseable engagement. Reddit is Stage 2's training domain, so we keep the
+# real title + engagement.
+_RE_REDDIT_SCORE = re.compile(r'class="score unvoted"[^>]*title="(\d+)"')
+_RE_REDDIT_COMMENTS = re.compile(r'data-comments-count="(\d+)"')
+_RE_REDDIT_TS = re.compile(r'data-timestamp="(\d+)"')
+
+
+# Reddit 403s Googlebot/bingbot and shows a verification wall to real browsers,
+# but still answers the facebook crawler with clean old.reddit HTML.
+_REDDIT_UA = "facebookexternalhit/1.1"
+
+
+def _scrape_reddit(url: str) -> ScrapedPost:
+    resolved = str(_fetch(url, _BROWSER_UA).url).split("?")[0]   # /s/ share -> canonical
+    old = re.sub(r"https?://(www\.|np\.|new\.)?reddit\.com", "https://old.reddit.com", resolved)
+
+    # Reddit throttles by IP, so a 403 is often transient -> retry with a short
+    # backoff. (Heavy bursts can still get blocked; then we fall back to manual.)
+    page = ""
+    for attempt in range(3):
+        if attempt:
+            time.sleep(1.5)
+        page = _fetch(old, _REDDIT_UA).text
+        if _RE_OG_DESC_FILLED.search(page):
+            break
+
+    title = html.unescape(_meta_regex(page, "og:title") or "")
+    body = html.unescape(_meta_regex(page, "og:description") or "")
+
+    def first(rx: re.Pattern) -> int | None:
+        m = rx.search(page)
+        return int(m.group(1)) if m else None
+
+    score, ncom, ts = first(_RE_REDDIT_SCORE), first(_RE_REDDIT_COMMENTS), first(_RE_REDDIT_TS)
+    if ts and ts > 10**12:           # data-timestamp is in milliseconds
+        ts //= 1000
+    return ScrapedPost(title=title, body=body, upvotes=score, num_comments=ncom, created_utc=ts)
+
+
+# Non-empty og:description -> the response actually carries the post content.
+# Some SPAs (Threads) answer a browser UA with a 200 *shell* that has no og data,
+# so "first 200 wins" is not enough; we must prefer a response that has content.
+_RE_OG_DESC_FILLED = re.compile(
+    r'property=["\']og:description["\'][^>]+content=["\'][^"\']+', re.IGNORECASE
+)
+
+
+def _fetch(url: str, ua: str):
+    import requests
+
+    return requests.get(
+        url,
+        headers={"User-Agent": ua, "Accept-Language": "en-US,en;q=0.9"},
+        timeout=20,
+        allow_redirects=True,
+    )
+
+
+def _fetch_html(url: str) -> tuple[str, str]:
+    """Return (html, final_url). Try browser then crawler UAs, and prefer the
+    first response that actually contains og:description (real content)."""
     try:
-        import requests
+        import requests  # noqa: F401
     except ImportError as e:
         raise RuntimeError("URL scraping needs requests: pip install requests") from e
 
-    headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125 Safari/537.36"
-        )
-    }
-    resp = requests.get(url, headers=headers, timeout=20)
-    resp.raise_for_status()
-    page = resp.text
+    last = ""
+    fallback: tuple[str, str] | None = None
+    for ua in (_BROWSER_UA, *_CRAWLER_UAS):
+        try:
+            resp = _fetch(url, ua)
+        except Exception as e:  # network / DNS / TLS
+            last = f"{type(e).__name__}"
+            continue
+        if resp.status_code == 200 and resp.text:
+            if _RE_OG_DESC_FILLED.search(resp.text):
+                return resp.text, str(resp.url)
+            fallback = fallback or (resp.text, str(resp.url))  # 200 but no og yet
+            last = "200 (no og:description)"
+        else:
+            last = f"HTTP {resp.status_code}"
+    if fallback is not None:
+        return fallback
+    raise ValueError(f"{_FALLBACK_MSG} ({last})")
+
+
+def scrape_url(url: str) -> ScrapedPost:
+    if "reddit.com" in url.lower():
+        return _scrape_reddit(url)
+
+    page, final_url = _fetch_html(url)
+    host = (final_url or url).lower()
 
     try:
         from bs4 import BeautifulSoup
     except ImportError:
         title = _meta_regex(page, "og:title") or _tag_regex(page, "title")
         body = _meta_regex(page, "og:description") or _meta_regex(page, "description")
-        return html.unescape(title or ""), html.unescape(body or "")
+        title, body = html.unescape(title or ""), html.unescape(body or "")
+    else:
+        soup = BeautifulSoup(page, "html.parser")
 
-    soup = BeautifulSoup(page, "html.parser")
+        def meta(name: str) -> str:
+            tag = soup.find("meta", attrs={"property": name}) or soup.find("meta", attrs={"name": name})
+            return str(tag.get("content", "")).strip() if tag else ""
 
-    def meta(name: str) -> str:
-        tag = soup.find("meta", attrs={"property": name}) or soup.find("meta", attrs={"name": name})
-        return str(tag.get("content", "")).strip() if tag else ""
+        title = meta("og:title") or (soup.title.get_text(" ", strip=True) if soup.title else "")
+        body = meta("og:description") or meta("description")
+        if not body:
+            article = soup.find("article")
+            body = article.get_text(" ", strip=True) if article else ""
 
-    title = meta("og:title") or (soup.title.get_text(" ", strip=True) if soup.title else "")
-    body = meta("og:description") or meta("description")
-    if not body:
-        article = soup.find("article")
-        body = article.get_text(" ", strip=True) if article else ""
-    return title, body
+    if any(h in host for h in _AUTHOR_TITLE_HOSTS):
+        title = ""  # og:title is the author name on these platforms, not a post title
+
+    upvotes = num_comments = created_utc = None
+    if "facebook.com" in host:
+        upvotes, num_comments, created_utc = _extract_fb_engagement(page)
+
+    return ScrapedPost(
+        title=title,
+        body=body,
+        upvotes=upvotes,
+        num_comments=num_comments,
+        created_utc=created_utc,
+    )
 
 
 def _meta_regex(page: str, name: str) -> str:
