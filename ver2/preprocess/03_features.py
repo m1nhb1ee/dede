@@ -47,9 +47,10 @@ import numpy as np
 import pandas as pd
 
 from config import (
-    COL_BODY, COL_ID, COL_LABEL, COL_NCMTS, COL_SUBR, COL_TIME, COL_TITLE,
-    COL_UPVOTES, EVAL_SUBR_PARQUET, FIRST_PERSON_WORDS, META_FEAT_PARQUET,
-    MH_KEYWORDS, NEGATIVE_WORDS, POSTS_CLEAN_PARQUET,
+    ABSOLUTIST_WORDS, COL_BODY, COL_ID, COL_LABEL, COL_NCMTS, COL_SUBR,
+    COL_TIME, COL_TITLE, COL_UPVOTES, EVAL_SUBR_PARQUET, FIRST_PERSON_WORDS,
+    META_FEAT_PARQUET, MH_KEYWORDS, NEGATIVE_WORDS, POSTS_CLEAN_PARQUET,
+    SECOND_PERSON_WORDS,
 )
 from utils import section, step, update_stats
 
@@ -138,6 +139,34 @@ def main() -> None:
     ).astype("int16")
     feats["num_words"] = lower_words.map(len).astype("int32")
     step(f"  done in {time.perf_counter()-t1:.1f}s")
+
+    # ── Tier-2 psycholinguistic markers (subreddit-blind, per-post) ──────
+    # Reuse the already-tokenized lower_words for the word-set counters.
+    t1 = time.perf_counter()
+    step("Counting absolutist / second-person + lexical diversity ...")
+    feats["num_absolutist"] = lower_words.map(
+        lambda ws: sum(1 for w in ws if w in ABSOLUTIST_WORDS)
+    ).astype("int16")
+    feats["num_second_person"] = lower_words.map(
+        lambda ws: sum(1 for w in ws if w in SECOND_PERSON_WORDS)
+    ).astype("int16")
+    # Type-token ratio (lexical diversity): unique / total words, 0 if empty.
+    feats["type_token_ratio"] = lower_words.map(
+        lambda ws: (len(set(ws)) / len(ws)) if ws else 0.0
+    ).astype("float32")
+    # Mean word length (chars per token), 0 if empty.
+    feats["avg_word_len"] = lower_words.map(
+        lambda ws: (sum(len(w) for w in ws) / len(ws)) if ws else 0.0
+    ).astype("float32")
+    step(f"  done in {time.perf_counter()-t1:.1f}s")
+
+    # Sentence count via terminal punctuation runs ([.!?]+ = one boundary).
+    feats["num_sentences"] = combined.str.count(r"[.!?]+").clip(lower=1).astype("int16")
+    # Uppercase letter ratio (emotional intensity / shouting).
+    n_upper = combined.str.count(r"[A-Z]")
+    n_alpha = combined.str.count(r"[A-Za-z]")
+    feats["uppercase_ratio"] = (n_upper / (n_alpha + 1)).astype("float32")
+    step("Sentence count + uppercase ratio done")
 
     # Has MH keyword (substring match for stems; the SINGLE strongest binary
     # feature per EDA -- 84.8% label=1 vs 19.9% label=0, lift 4.3x).

@@ -1,0 +1,22 @@
+{
+  "objective": "binary",
+  "metric": [
+    "binary_logloss",
+    "auc"
+  ],
+  "boosting_type": "gbdt",
+  "num_leaves": 255,
+  "max_depth": -1,
+  "learning_rate": 0.013787764619353767,
+  "n_estimators": 2000,
+  "min_child_samples": 500,
+  "reg_alpha": 0.00397211072738191,
+  "reg_lambda": 0.034890188454913866,
+  "subsample": 1.0,
+  "subsample_freq": 1,
+  "colsample_bytree": 1.0,
+  "class_weight": "balanced",
+  "random_state": 42,
+  "n_jobs": -1,
+  "verbose": -1
+}

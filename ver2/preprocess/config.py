@@ -67,6 +67,19 @@ MH_KEYWORDS = {
 
 FIRST_PERSON_WORDS = {"i", "me", "my", "mine", "myself", "im"}
 
+# Second-person pronouns (lower in self-focused depressive writing).
+SECOND_PERSON_WORDS = {"you", "your", "youre", "yours", "yourself", "yourselves", "u", "ur"}
+
+# Absolutist vocabulary -- elevated in depression/anxiety/SI forums
+# (Al-Mosaiwi & Johnson-Laird 2018). Single-token forms only (matched on the
+# word tokenizer); multi-word phrases like "no one" are not captured here.
+ABSOLUTIST_WORDS = {
+    "absolutely", "all", "always", "complete", "completely", "constant",
+    "constantly", "definitely", "entire", "entirely", "ever", "every",
+    "everyone", "everything", "full", "fully", "must", "never", "nothing",
+    "never", "none", "nobody", "nowhere", "totally", "total", "whole",
+}
+
 NEGATIVE_WORDS = {
     "sad", "angry", "afraid", "scared", "fear", "lonely", "miserable",
     "horrible", "terrible", "awful", "bad", "worse", "worst",

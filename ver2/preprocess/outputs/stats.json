@@ -85,7 +85,7 @@
   },
   "features": {
     "n_rows": 2470017,
-    "n_features_excluding_id_label": 23,
+    "n_features_excluding_id_label": 29,
     "columns": [
       "id",
       "title_len_chars",
@@ -104,6 +104,12 @@
       "num_first_person",
       "num_negative_words",
       "num_words",
+      "num_absolutist",
+      "num_second_person",
+      "type_token_ratio",
+      "avg_word_len",
+      "num_sentences",
+      "uppercase_ratio",
       "has_mh_keyword",
       "hour_sin",
       "hour_cos",

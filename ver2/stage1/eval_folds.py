@@ -20,7 +20,7 @@ from sklearn.metrics import (
 )
 
 PRED_DIR = Path("ver2/stage1/outputs/predictions")
-FOLDS = [0, 1]
+FOLDS = [0, 1, 2]
 
 
 def best_threshold(y, p):

@@ -254,14 +254,74 @@ print("Files in predictions/:")
 for p in sorted(PRED_DIR.glob("*.parquet")):
     print(f"  {p.name:50s} {p.stat().st_size/1e6:.1f} MB")
 
-# Zip just predictions (small). Skip checkpoints (large, ~500 MB per fold).
+# Zip just predictions (small). Checkpoints are zipped separately in CELL 8.
 zip_path = "/kaggle/working/predictions.zip"
 subprocess.run(["zip", "-jrq", zip_path, str(PRED_DIR)], check=True)
 print(f"\\nWrote {zip_path}  "
       f"({Path(zip_path).stat().st_size/1e6:.1f} MB)")
 print("Download from the right sidebar -> Output panel.")
+"""
 
-# Optionally, save the best checkpoint of THIS notebook's run for re-use:
-# subprocess.run(["zip", "-rq", "/kaggle/working/checkpoint.zip",
-#                 "outputs/checkpoints/"], check=True)
+
+# ═════════════════════════════════════════════════════════════════════════
+# CELL 8 -- Zip the BEST checkpoint for download (so you never re-train just
+#           to re-predict). Two options; pick ONE.
+# ═════════════════════════════════════════════════════════════════════════
+"""
+import json, subprocess
+from pathlib import Path
+
+run_name = "full" if TRAIN_FULL_MODEL else f"fold_{FOLD_THIS_NOTEBOOK}"
+CKPT_ROOT = Path(f"/kaggle/working/stage1/outputs/checkpoints/{run_name}")
+
+# Find the BEST checkpoint (Trainer records it in trainer_state.json). Fall back
+# to the highest-step checkpoint if that field is missing.
+def find_best_ckpt(root: Path) -> Path:
+    states = sorted(root.glob("checkpoint-*/trainer_state.json"))
+    if states:
+        best = json.loads(states[-1].read_text()).get("best_model_checkpoint")
+        if best and Path(best).exists():
+            return Path(best)
+    ckpts = sorted(root.glob("checkpoint-*"),
+                   key=lambda p: int(p.name.split("-")[1]))
+    if not ckpts:
+        raise FileNotFoundError(f"No checkpoint-* under {root}")
+    return ckpts[-1]
+
+best_dir = find_best_ckpt(CKPT_ROOT)
+print(f"Best checkpoint: {best_dir}")
+for f in sorted(best_dir.iterdir()):
+    print(f"  {f.name:28s} {f.stat().st_size/1e6:7.1f} MB")
+
+# ── OPTION A (LEAN, ~16 MB): extract ONLY the trainable weights (LoRA + custom
+#    head). Drops the frozen 125M backbone (you already have it as the Kaggle
+#    model input) and the optimizer state. Enough to re-predict / inference. ──
+import torch
+sf = best_dir / "model.safetensors"
+if sf.exists():
+    from safetensors.torch import load_file, save_file
+    full = load_file(str(sf))
+else:
+    full = torch.load(best_dir / "pytorch_model.bin", map_location="cpu")
+
+trainable = {k: v for k, v in full.items()
+             if ("lora_" in k) or k.startswith("head.") or k == "pos_weight"}
+n_params = sum(v.numel() for v in trainable.values())
+print(f"\\nLEAN: kept {len(trainable)} tensors, {n_params:,} params "
+      f"(LoRA + custom head)")
+
+lean_path = Path(f"/kaggle/working/{run_name}_trainable.safetensors")
+from safetensors.torch import save_file
+save_file(trainable, str(lean_path))
+print(f"Wrote {lean_path}  ({lean_path.stat().st_size/1e6:.2f} MB) "
+      f"<- download this; tiny.")
+
+# ── OPTION B (FULL, ~500 MB+): zip the whole best checkpoint dir, including
+#    optimizer/scheduler state -> lets you RESUME training, not just predict.
+#    Uncomment if you want it.
+# full_zip = f"/kaggle/working/{run_name}_checkpoint.zip"
+# subprocess.run(["zip", "-rq", full_zip, str(best_dir)], check=True)
+# print(f"FULL: {full_zip}  ({Path(full_zip).stat().st_size/1e6:.0f} MB)")
+
+print("\\nDownload from the right sidebar -> Output panel.")
 """
